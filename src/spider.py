@@ -20,11 +20,11 @@ class AnimeSpider(Spider):
     _base_ts_url = None
     _mixed_m3u8 = None
     concurrency = 1
-    start_urls = ['https://www.mhyyy.com/play/25972-2-1.html']
     headers = {'User-Agent': 'Mozilla/5.0'}
 
     @classmethod
-    def init(cls, anime_title: str):
+    def init(cls, anime_title: str, start_urls):
+        cls.start_urls = start_urls
         video_path = Path(__file__).parent.parent / anime_title  # 在项目目录下存储
         cls.PATH = folder_path(video_path)
         return cls  # 为了链式调用返回了cls
@@ -81,6 +81,14 @@ class AnimeSpider(Spider):
         print('\033[0;32;40m写入mixed.m3u8\033[0m')
         await write(folder_path, text, 'mixed', 'm3u8', 'w+')
         urls = self._parse_mixed_m3u8(item)
+        ''' HACK
+        已知在下载多集动漫时aiohttp会报以下错误的其中之一
+        1. TypeError: Constructor parameter should be str
+        2. aiohttp.client_exceptions.ClientPayloadError: Response payload is not completed
+        只好新开个线程单独下载，并阻塞主线程
+        即使是这样，也难免会报错
+        属于下策中的下策了
+        '''
         thread = threading.Thread(
             target=Downloader(urls).start, args=(folder_path, item.episodes)
         )
@@ -89,4 +97,4 @@ class AnimeSpider(Spider):
 
 
 if __name__ == '__main__':
-    AnimeSpider.init('甘城光辉游乐园').start()
+    AnimeSpider.init('甘城光辉游乐园', 'https://www.mhyyy.com/play/25972-2-1.html').start()
