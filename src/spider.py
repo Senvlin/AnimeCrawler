@@ -1,11 +1,10 @@
 import re
-import threading
 from pathlib import Path
 
 from downloader import Downloader
-from ruia import Item, Spider, TextField
+from ruia import Item, Response, Spider, TextField
 from utils.decode import base64_decode, unescape
-from utils.file import folder_path, write
+from utils.file import folder_path, merge_ts2mp4, write
 
 
 class AnimeItem(Item):
@@ -19,15 +18,23 @@ class AnimeItem(Item):
 class AnimeSpider(Spider):
     _base_ts_url = None
     _mixed_m3u8 = None
-    concurrency = 1
     headers = {'User-Agent': 'Mozilla/5.0'}
 
     @classmethod
-    def init(cls, anime_title: str, start_urls):
+    def init(cls, anime_title: str, start_urls: str):
+        '''初始化爬虫
+
+        Args:
+            anime_title (str): 动漫标题，用于取文件夹的名称，利于管理动漫
+            start_urls (str): 第一页的网址
+
+        Returns:
+            cls: 为了链式调用返回了cls
+        '''
         cls.start_urls = start_urls
         video_path = Path(__file__).parent.parent / anime_title  # 在项目目录下存储
         cls.PATH = folder_path(video_path)
-        return cls  # 为了链式调用返回了cls
+        return cls
 
     async def _mixed_m3u8_url_parse(self, index_m3u8_url: str, item: AnimeItem) -> None:
         resp = await self.request(index_m3u8_url).fetch()
@@ -49,7 +56,17 @@ class AnimeSpider(Spider):
                 if '#' not in i:
                     yield base_ts_file + i
 
-    async def parse(self, response):
+    async def have_next_page(self, link_next: str):
+        # 当有下一页时
+        link_next = link_next.replace('\\', '')
+        print(f'\033[0;32;40m{link_next=}\033[0m')
+        return self.request(
+            'https://www.mhyyy.com' + link_next,
+            callback=self.parse,
+            headers=self.headers,
+        )
+
+    async def parse(self, response: Response):
         print('\033[0;32;40mparse函数\033[0m')
         async for item in AnimeItem.get_items(html=await response.text()):
             profile = item.profile
@@ -64,15 +81,8 @@ class AnimeSpider(Spider):
 
             link_next = player_aaaa.get('link_next', None)
             if link_next:
-                # 当有下一页时
-                link_next = link_next.replace('\\', '')
-                print(f'\033[0;32;40m{link_next=}\033[0m')
-                yield self.request(
-                    'https://www.mhyyy.com' + link_next,
-                    callback=self.parse,
-                    headers=self.headers,
-                )
-        yield item
+                yield await self.have_next_page(link_next)
+            yield item
 
     async def process_item(self, item: AnimeItem):
         resp = await self.request(item.mixed_m3u8_url, headers=self.headers).fetch()
@@ -83,7 +93,9 @@ class AnimeSpider(Spider):
         await write(folder_path, text, 'mixed', 'm3u8', 'w+')
         urls = self._parse_mixed_m3u8(item)
         await Downloader(urls).download_ts_files(folder_path, episodes)
+        self.logger.info(f"正在把第 {episodes} 集的ts文件转码成 mp4")
+        await merge_ts2mp4(folder_path, episodes)
 
 
 if __name__ == '__main__':
-    AnimeSpider.init('甘城光辉游乐园', ['https://www.mhyyy.com/play/25972-2-1.html']).start()
+    AnimeSpider.init('魔女之旅', ['https://www.mhyyy.com/play/166269-1-1.html']).start()
