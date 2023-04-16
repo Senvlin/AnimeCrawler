@@ -97,4 +97,4 @@ class AnimeSpider(Spider):
 
 
 if __name__ == '__main__':
-    AnimeSpider.init('甘城光辉游乐园', 'https://www.mhyyy.com/play/25972-2-1.html').start()
+    AnimeSpider.init('甘城光辉游乐园', ['https://www.mhyyy.com/play/25972-2-1.html']).start()
