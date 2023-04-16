@@ -42,3 +42,17 @@ async def write(
     folder = folder_path(path)
     async with aiofiles.open(folder / f'{title}.{suffix}', mode) as fp:
         await fp.write(text)
+
+
+async def merge_ts2mp4(folder_path: Path, episodes: int = None):
+    '''将ts文件合并成mp4
+
+    Args:
+        folder_path (Path): 文件夹路径，里面应有ts文件
+        episodes (int): 动漫集数. Defaults to None.
+    '''
+    for file_path in folder_path.iterdir():
+        if file_path.suffix == '.ts':
+            with open(file_path, 'rb') as f1:
+                with open(folder_path / f"第{episodes}集.mp4", 'ab') as f2:
+                    f2.write(f1.read())
