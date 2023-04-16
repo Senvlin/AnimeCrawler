@@ -77,23 +77,12 @@ class AnimeSpider(Spider):
     async def process_item(self, item: AnimeItem):
         resp = await self.request(item.mixed_m3u8_url, headers=self.headers).fetch()
         text = await resp.text()
-        folder_path = self.PATH / f'{item.episodes}'
+        episodes = item.episodes
+        folder_path = self.PATH / f'{episodes}'
         print('\033[0;32;40m写入mixed.m3u8\033[0m')
         await write(folder_path, text, 'mixed', 'm3u8', 'w+')
         urls = self._parse_mixed_m3u8(item)
-        ''' HACK
-        已知在下载多集动漫时aiohttp会报以下错误的其中之一
-        1. TypeError: Constructor parameter should be str
-        2. aiohttp.client_exceptions.ClientPayloadError: Response payload is not completed
-        只好新开个线程单独下载，并阻塞主线程
-        即使是这样，也难免会报错
-        属于下策中的下策了
-        '''
-        thread = threading.Thread(
-            target=Downloader(urls).start, args=(folder_path, item.episodes)
-        )
-        thread.start()
-        thread.join()
+        await Downloader(urls).download_ts_files(folder_path, episodes)
 
 
 if __name__ == '__main__':

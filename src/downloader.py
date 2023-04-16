@@ -14,7 +14,9 @@ class Downloader:
     @property
     def current_sesion(self):
         if not self.session:
-            self.session = aiohttp.ClientSession()
+            self.session = aiohttp.ClientSession(
+                connector=aiohttp.TCPConnector(limit=40, verify_ssl=False)
+            )
         return self.session
 
     async def get_ts_file(
@@ -23,23 +25,25 @@ class Downloader:
         url: str,
         error_times: int = 1,
     ) -> None:
-        async with self.current_sesion.get(
+        resp = await self.current_sesion.get(
             url=url,
             headers={'User-Agent': 'Mozilla/5.0', ' Transfer-Encoding': 'chunked'},
-        ) as resp:
-            try:
-                text = await resp.content.read()
-                await asyncio.sleep(0)
-            except aiohttp.ClientPayloadError as e:  # 报错时重新下载
-                if error_times == 3:
-                    raise Warning(f'下载{title}.ts时发生错误') from e
-                print(f'下载{title}.ts时发生错误，正在重试第{error_times}次')
-                await self.get_ts_file(url, error_times + 1)
-                return
-            except Exception as e:
-                print(f'下载{title}.ts时发生{e}')
-                return
-        return text, title
+        )
+        try:
+            text = await resp.content.read()
+        except aiohttp.ClientPayloadError as e:  # 报错时重新下载
+            if error_times == 3:
+                raise Warning(f'下载{title}.ts时发生错误') from e
+            print(f'下载{title}.ts时发生错误，正在重试第{error_times}次')
+            await self.get_ts_file(title, url, error_times + 1)
+            await asyncio.sleep(0)
+        except Exception as e:
+            print(f'下载{title}.ts时发生{e}')
+            await asyncio.sleep(0)
+        else:
+            return (text, title)
+        finally:
+            resp.close()
 
     async def close_session(self):
         if self.session:
@@ -51,8 +55,8 @@ class Downloader:
             for index, url in enumerate(self.urls)
         ]
         for task in tqdm.asyncio.tqdm.as_completed(tasks, desc=f"正在下载第{episodes}集视频"):
-            text, title = await task
-            await write(path, text, title, suffix='ts', mode='wb')
+            text_1, title = await task
+            await write(path, text_1, title, suffix='ts', mode='wb')
         await self.close_session()
 
     def start(self, path, episodes):
