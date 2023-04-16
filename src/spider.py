@@ -1,6 +1,8 @@
 import re
+import threading
 from pathlib import Path
 
+from downloader import Downloader
 from ruia import Item, Spider, TextField
 from utils.decode import base64_decode, unescape
 from utils.file import folder_path, write
@@ -17,7 +19,7 @@ class AnimeItem(Item):
 class AnimeSpider(Spider):
     _base_ts_url = None
     _mixed_m3u8 = None
-    concurrency = 10
+    concurrency = 1
     start_urls = ['https://www.mhyyy.com/play/25972-2-1.html']
     headers = {'User-Agent': 'Mozilla/5.0'}
 
@@ -70,16 +72,6 @@ class AnimeSpider(Spider):
                     callback=self.parse,
                     headers=self.headers,
                 )
-        print('\033[0;32;40开始请求ts文件\033[0m')
-        urls = self._parse_mixed_m3u8(item)
-        async for resp in self.multiple_request(
-            urls, is_gather=True, headers=self.headers
-        ):
-            print(f'\033[0;32;40m{resp.index=}\033[0m')
-            title = str(resp.index).zfill(4)
-            yield await write(
-                folder_path, await resp.read(), title, 'ts', 'w+b'
-            )  # TODO 完成ts文件下载
         yield item
 
     async def process_item(self, item: AnimeItem):
@@ -88,6 +80,12 @@ class AnimeSpider(Spider):
         folder_path = self.PATH / f'{item.episodes}'
         print('\033[0;32;40m写入mixed.m3u8\033[0m')
         await write(folder_path, text, 'mixed', 'm3u8', 'w+')
+        urls = self._parse_mixed_m3u8(item)
+        thread = threading.Thread(
+            target=Downloader(urls).start, args=(folder_path, item.episodes)
+        )
+        thread.start()
+        thread.join()
 
 
 if __name__ == '__main__':
