@@ -23,9 +23,9 @@ async def write(
     text: str,
     title: Union[str, int],
     suffix: str = 'txt',
-    mode: str = 'a',
+    mode: str = 'w',
 ):
-    '''在文件夹下存储文件
+    '''使用aiofiles，在文件夹下存储文件
 
     Args:
         path (Path): 文件夹路径
