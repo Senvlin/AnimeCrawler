@@ -34,11 +34,3 @@ def unescape(string) -> str:
         lambda m: chr(int(m.group(1), 16)),
         quoted,
     )
-
-
-def folder_path(folder_path):
-    print(f'{folder_path=}')
-
-    if not folder_path.exists():
-        folder_path.mkdir()
-    return folder_path
