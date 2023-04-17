@@ -8,7 +8,7 @@ setuptools.setup(
     version="v0.1.0",
     author="Senvlin",
     author_email="2994515402@qq.com",
-    description="test",
+    description="一个可免费下载动漫的爬虫",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/Senvlin/AnimeCrawler",
