@@ -78,3 +78,7 @@ class CrawlerCommands:
             if parse.is_test:
                 return 'OK'
             AnimeSpider.init(parse.title, parse.url, parse.can_del_ts).start()
+
+
+def main():
+    CrawlerCommands().parse()
