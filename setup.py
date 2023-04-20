@@ -5,7 +5,7 @@ with open("README.md", "r", encoding='utf-8') as fh:
 
 setuptools.setup(
     name="AnimeCrawler",
-    version="v0.1.0",
+    version="v0.1.1",
     author="Senvlin",
     author_email="2994515402@qq.com",
     description="一个可免费下载动漫的爬虫",
@@ -19,9 +19,14 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     install_requires=[
-        'ruia==0.8.5',
-        'tqdm==4.65.0',
-        'aiofiles==23.1.0',
+        'ruia',
+        'tqdm',
+        'aiofiles',
     ],
+    entry_points={
+        'console_scripts': [
+            'animecrawler = AnimeCrawler.command.run:main',
+        ],
+    },
     python_requires='>=3.8',
 )
