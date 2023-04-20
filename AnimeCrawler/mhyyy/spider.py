@@ -29,7 +29,7 @@ class AnimeSpider(Spider):
     headers = {'User-Agent': 'Mozilla/5.0'}
 
     @classmethod
-    def init(cls, anime_title: str, start_urls: str):
+    def init(cls, anime_title: str, start_urls: str, del_ts: bool = False):
         '''初始化爬虫
 
         Args:
@@ -39,7 +39,8 @@ class AnimeSpider(Spider):
         Returns:
             cls: 为了链式调用返回了cls
         '''
-        cls.start_urls = start_urls
+        cls.start_urls = [start_urls]
+        cls.del_ts = del_ts
         video_path = Path(get_video_path()) / anime_title  # 在项目目录下存储
         cls.PATH = folder_path(video_path)
         return cls
@@ -99,7 +100,7 @@ class AnimeSpider(Spider):
         urls = self._parse_mixed_m3u8(item)
         await Downloader(urls).download_ts_files(folder_path, episodes)
         self.logger.info(f"正在把第 {episodes} 集的ts文件转码成 mp4")
-        await merge_ts2mp4(folder_path, episodes)
+        await merge_ts2mp4(folder_path, episodes, self.del_ts)
 
 
 if __name__ == '__main__':
