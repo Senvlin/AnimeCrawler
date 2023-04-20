@@ -1,3 +1,4 @@
+from AnimeCrawler.command import CrawlerCommands
 from AnimeCrawler.mhyyy import AnimeSpider, Downloader
 from AnimeCrawler.utils import (
     base64_decode,
