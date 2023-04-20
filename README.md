@@ -12,7 +12,7 @@
 <p align="center">离线播放，享受流畅的观看体验</p>
 
 
-这是一款基于 <code>[**Ruia**](https://github.com/howie6879/ruia)</code> 轻量级框架、在Windows平台下专门爬取免费动漫的爬虫，底层使用<code>aiohttp</code>库，使用异步模式，大幅增加爬取及下载速度。可**离线播放**各大动漫，支持命令行输入，立志成为最实用，最轻量的动漫管理及下载助手
+这是一款在Windows平台下基于轻量级框架<code>[**Ruia**](https://github.com/howie6879/ruia)</code>、专门爬取免费动漫的爬虫，底层使用<code>aiohttp</code>库，使用异步模式，大幅增加爬取及下载速度。可**离线播放**各大动漫，支持**命令行输入**，立志成为最实用，最轻量的动漫管理及下载助手
 
 ## ❓如何使用
 1. 首先来到[这里](https://www.python.org/downloads)下载Python解释器, 要求Python3.8及以上版本，安装即可
@@ -35,9 +35,8 @@
 
 - [x] 下载多集动漫
 - [x] 支持命令行工具
-- [ ] 支持动漫检索
+- [ ] 支持检索动漫
 - [ ] 可更换下载源
-- [ ] 支持命令行输入
 - [ ] 支持上传网盘
 - [ ] <span style="text-decoration: line-through">甚至是GUI</span>
 
