@@ -1,4 +1,4 @@
-from AnimeCrawler.command import CrawlerCommands
+from AnimeCrawler.command import main
 from AnimeCrawler.log import get_logger
 from AnimeCrawler.mhyyy import AnimeSpider, Downloader
 from AnimeCrawler.utils import (
@@ -9,3 +9,5 @@ from AnimeCrawler.utils import (
     unescape,
     write,
 )
+
+__version__ = 'v0.1.2_dev1'

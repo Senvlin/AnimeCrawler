@@ -1,14 +1,4 @@
-import os
-import sys
-
-from AnimeCrawler.command.run import CrawlerCommands
-
-if sys.path[0] in ("", os.getcwd()):
-    sys.path.pop(0)
-
-if __package__ == "":
-    path = os.path.dirname(os.path.dirname(__file__))
-    sys.path.insert(0, path)
+from AnimeCrawler.command.run import main
 
 if __name__ == '__main__':
-    CrawlerCommands().parse()
+    main()

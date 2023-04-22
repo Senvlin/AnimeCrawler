@@ -14,7 +14,7 @@ class ColorFilter(logging.Filter):
         super().__init__(**kwargs)
 
     def filter(self, record: logging.LogRecord) -> bool:
-        message_level = self.FMTDCIT.get(record.levelname)
+        message_level = self.FMTDCIT.get(record.levelname, 'Something went wrong')
         record.levelname = message_level.format(record.levelname)
         record.msg = message_level.format(record.msg)
         return True
@@ -29,17 +29,3 @@ def get_logger(name='') -> logging.Logger:
     logger = logging.getLogger(name)
     logger.addFilter(ColorFilter())
     return logger
-
-
-if __name__ == '__main__':
-    import ruia
-
-    class ASpider(ruia.Spider):
-        start_urls = ['https://www.github.com']
-
-        def parse(self):
-            print('parse')
-
-    logger = get_logger()
-    logger.warning('aaaa')
-    ASpider.start()

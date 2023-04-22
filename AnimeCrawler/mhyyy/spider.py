@@ -3,6 +3,7 @@ from pathlib import Path
 
 from ruia import Item, Response, Spider, TextField
 
+from AnimeCrawler.log import get_logger
 from AnimeCrawler.utils import (
     base64_decode,
     folder_path,
@@ -26,7 +27,9 @@ class AnimeItem(Item):
 class AnimeSpider(Spider):
     _base_ts_url = None
     _mixed_m3u8 = None
+    logger = get_logger('Spider')
     headers = {'User-Agent': 'Mozilla/5.0'}
+    concurrency: int = 5
 
     @classmethod
     def init(cls, anime_title: str, start_urls: str, del_ts: bool = False):
@@ -95,7 +98,7 @@ class AnimeSpider(Spider):
         text = await resp.text()
         episodes = item.episodes
         folder_path = self.PATH / f'{episodes}'
-        print('\033[0;32;40m写入mixed.m3u8\033[0m')
+        self.logger.info("正在写入mixed.m3u8")
         await write(folder_path, text, 'mixed', 'm3u8', 'w+')
         urls = self._parse_mixed_m3u8(item)
         await Downloader(urls).download_ts_files(folder_path, episodes)

@@ -1,22 +1,21 @@
-import asyncio
-
 import aiohttp
 import tqdm.asyncio
 
+from AnimeCrawler.log import get_logger
 from AnimeCrawler.utils import write
 
 
 class Downloader:
-    session = None
-
     def __init__(self, urls):
         self.urls = urls
+        self.session = None
+        self.logger = get_logger('Downloader')
 
     @property
-    def current_sesion(self):
+    def current_session(self):
         if not self.session:
             self.session = aiohttp.ClientSession(
-                connector=aiohttp.TCPConnector(limit=40, verify_ssl=False)
+                connector=aiohttp.TCPConnector(limit=55, verify_ssl=False)
             )
         return self.session
 
@@ -26,26 +25,25 @@ class Downloader:
         url: str,
         error_times: int = 1,
     ):
-        resp = await self.current_sesion.get(
+        resp = await self.current_session.get(
             url=url,
             headers={'User-Agent': 'Mozilla/5.0', ' Transfer-Encoding': 'chunked'},
         )
         try:
             text = await resp.content.read()
             return (text, title)
-        except aiohttp.ClientPayloadError as e:  # 报错时重新下载
+        except aiohttp.ClientPayloadError:  # 报错时重新下载
             if error_times == 3:
-                raise Warning(f'下载{title}.ts时发生错误') from e
-            print(f'下载{title}.ts时发生错误，正在重试第{error_times}次')
+                self.logger.error(f'无法下载{title}.ts')
+            self.logger.warning(f'下载{title}.ts时发生错误，正在重试第{error_times}次')
             return await self.get_ts_file(title, url, error_times + 1)
         except Exception as e:
-            print(f'下载{title}.ts时发生{e}')
-            await asyncio.sleep(0)
+            self.logger.error(f'下载{title}.ts时发生{e}')
         finally:
             resp.close()
 
     async def close_session(self):
-        if self.session:
+        if self.current_session:
             await self.session.close()
 
     async def download_ts_files(self, path, episodes):
