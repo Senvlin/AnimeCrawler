@@ -18,8 +18,8 @@
 1. 首先来到[这里](https://www.python.org/downloads)下载Python解释器, 要求Python3.8及以上版本，安装即可
 2. 然后，打开命令提示符，输入 <code>pip install AnimeCrawler</code>
 3. 其次，来到[这个网站](https://www.mhyyy.com/),搜索您喜欢的动漫，点击播放页，将第一页的url复制一下
-4. 最后，打开命令提示符，输入 <code>python -m AnimeCrawler "动漫名称" "url"</code> 回车就可以下载啦
-    - 输入 <code>python -m AnimeCrawler -h</code> 会有详细的说明
+4. 最后，打开命令提示符，输入 <code>AnimeCrawler download -t "动漫标题" -u "URL"</code> 回车就可以下载啦
+    - 输入 <code>AnimeCrawler -h</code> 会有详细的说明
 > 下载后的文件在您的视频文件夹里
 
 如果您想体验最新的功能，请转到dev分支~
@@ -43,7 +43,7 @@
 ## 🧱从源码搭建
 1. 点击[这里](https://github.com/Senvlin/AnimeCrawler/releases)找到最新版本，下载源码
 2. 转到项目目录，使用 <code>pip install -r requirement.txt</code> 安装依赖库
-3. 随后使用 <code>python -m AnimeCrawler "动漫名称" "url"</code> 或打开 <code>AnimeCrawler\mhyyy\spider.py</code>运行即可
+3. 随后使用 <code>python -m AnimeCrawler download -t "动漫标题" -u "URL"</code> 运行即可
 
 ## ❗ 声明
 此项目只因个人兴趣而开发，仅供学习交流使用，无任何商业用途
