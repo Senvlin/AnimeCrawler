@@ -32,28 +32,30 @@ class AnimeSpider(BaseSpider):
     headers = {'User-Agent': 'Mozilla/5.0'}
 
     @classmethod
-    def init(cls, anime_title: str, start_urls: str, del_ts: bool = False):
+    def init(cls, anime_title: str, urls: str, del_ts: bool = False):
         '''初始化爬虫
 
         Args:
             anime_title (str): 动漫标题，用于取文件夹的名称，利于管理动漫
-            start_urls (str): 第一页的网址
+            urls (str): 第一页的网址
 
         Returns:
             cls: 为了链式调用返回了cls
         '''
-        cls.start_urls = [start_urls]
-        cls.del_ts = del_ts
-        video_path = Path(get_video_path()) / anime_title  # 在项目目录下存储
+        cls.domain = cls.get_domain(cls, urls)
+        cls.start_urls = [cls.get_path(cls, urls)]
+        video_path = Path(get_video_path()) / anime_title
         cls.PATH = folder_path(video_path)
-        return cls
+        cls.del_ts = del_ts
+        return super().init()
 
     async def _mixed_m3u8_url_parse(self, index_m3u8_url: str, item: AnimeItem) -> None:
         resp = await self.request(index_m3u8_url).fetch()
         text = await resp.text()
         if self._mixed_m3u8 is None:
             self._mixed_m3u8 = text.split('\n')[-1]
-        item.mixed_m3u8_url = item._base_m3u8_url + self._mixed_m3u8
+        item.mixed_m3u8_url = await self.urljoin(item._base_m3u8_url, self._mixed_m3u8)
+        self.logger.info(f'{item.mixed_m3u8_url=}')
 
     def _parse_mixed_m3u8(self, item: AnimeItem):
         '''解析mixed.m3u8文件，获得ts文件下载地址
