@@ -28,7 +28,7 @@ class Downloader:
     ):
         resp = await self.current_sesion.get(
             url=url,
-            headers={'User-Agent': 'Mozilla/5.0', ' Transfer-Encoding': 'chunked'},
+            headers={'User-Agent': 'Mozilla/5.0', 'Transfer-Encoding': 'chunked'},
         )
         try:
             text = await resp.content.read()
