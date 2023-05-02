@@ -3,6 +3,7 @@ from pathlib import Path
 
 from ruia import Item, Response, Spider, TextField
 
+from AnimeCrawler.base_spider import BaseSpider
 from AnimeCrawler.log import get_logger
 from AnimeCrawler.utils import (
     base64_decode,
@@ -24,7 +25,7 @@ class AnimeItem(Item):
     mixed_m3u8_url = None
 
 
-class AnimeSpider(Spider):
+class AnimeSpider(BaseSpider):
     _base_ts_url = None
     _mixed_m3u8 = None
     logger = get_logger('Spider')
