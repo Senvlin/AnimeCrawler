@@ -16,5 +16,5 @@ _(AnimeCrawler版本：输入 `AnimeCrawler -h` 查看版本）_
 
 ## platform:
 - [ ] Windows
-- [ ] Linux
-- [ ] Mac
+- [ ] Linux (Not Supported)
+- [ ] Mac (Not Supported)
