@@ -10,3 +10,5 @@ from AnimeCrawler.utils import (
     unescape,
     write,
 )
+
+__version__ = 'v0.1.2'

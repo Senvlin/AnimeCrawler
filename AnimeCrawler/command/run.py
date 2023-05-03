@@ -78,7 +78,7 @@ def main():
     parser = argparse.ArgumentParser(
         prog='AnimeCrawler',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description='* AnimeCrawler v0.1.1 - 一个可免费下载动漫的爬虫\n* Repo: https://github.com/Senvlin/AnimeCrawler',
+        description='* AnimeCrawler v0.1.2 - 一个可免费下载动漫的爬虫\n* Repo: https://github.com/Senvlin/AnimeCrawler',
         epilog='Had Issues? Go To -> https://github.com/Senvlin/AnimeCrawler/issues',
     )
     subparsers: argparse._SubParsersAction = parser.add_subparsers(prog='AnimeCrawler')

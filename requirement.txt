@@ -1,4 +1,4 @@
 ruia
 tqdm
 aiofiles
-aiohttp
+wheel

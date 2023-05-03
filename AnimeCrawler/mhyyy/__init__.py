@@ -11,4 +11,3 @@ from AnimeCrawler.utils import (
 from .downloader import Downloader
 from .spider import AnimeSpider
 
-__version__ = 'v0.1.0_dev_3'
