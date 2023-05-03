@@ -1,7 +1,7 @@
 import re
 from pathlib import Path
 
-from ruia import Item, Response, Spider, TextField
+from ruia import Item, Response, TextField
 
 from AnimeCrawler.base_spider import BaseSpider
 from AnimeCrawler.log import get_logger
@@ -28,7 +28,7 @@ class AnimeItem(Item):
 class AnimeSpider(BaseSpider):
     _base_ts_url = None
     _mixed_m3u8 = None
-    logger = get_logger('Spider')
+    downloader = Downloader
     headers = {'User-Agent': 'Mozilla/5.0'}
 
     @classmethod
@@ -44,8 +44,7 @@ class AnimeSpider(BaseSpider):
         '''
         cls.domain = cls.get_domain(cls, urls)
         cls.start_urls = [cls.get_path(cls, urls)]
-        video_path = Path(get_video_path()) / anime_title
-        cls.PATH = folder_path(video_path)
+        cls.PATH = folder_path(Path(get_video_path()) / anime_title)
         cls.del_ts = del_ts
         return super().init()
 
@@ -72,8 +71,8 @@ class AnimeSpider(BaseSpider):
     async def have_next_page(self, link_next: str):
         # 当有下一页时
         link_next = link_next.replace('\\', '')
-        return self.request(
-            'https://www.mhyyy.com' + link_next,
+        return await self.follow(
+            await self.urljoin(self.domain, link_next),
             callback=self.parse,
             headers=self.headers,
         )
@@ -100,10 +99,10 @@ class AnimeSpider(BaseSpider):
         text = await resp.text()
         episodes = item.episodes
         folder_path = self.PATH / f'{episodes}'
-        print('\033[0;32;40m写入mixed.m3u8\033[0m')
+        self.logger.info('\033[0;32;40m写入mixed.m3u8\033[0m')
         await write(folder_path, text, 'mixed', 'm3u8', 'w+')
         urls = self._parse_mixed_m3u8(item)
-        await Downloader(urls).download_ts_files(folder_path, episodes)
+        await self.downloader(urls).download_ts_files(folder_path, episodes)
         self.logger.info(f"正在把第 {episodes} 集的ts文件转码成 mp4")
         await merge_ts2mp4(folder_path, episodes, self.del_ts)
 

@@ -13,6 +13,8 @@ class BaseSpider(Spider):
     def init(cls):
         if not hasattr(cls, 'domain'):
             raise ValueError(f'{cls.__name__} 未定义domain属性')
+        if not hasattr(cls, 'downloader'):
+            raise ValueError(f'{cls.__name__} 未定义downloader属性')
         cls.start_urls = [
             i if is_url(i) else urllib.parse.urljoin(cls.domain, i)
             for i in cls.start_urls
