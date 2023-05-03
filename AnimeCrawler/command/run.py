@@ -1,10 +1,9 @@
 import abc
-import abc
 import argparse
 from collections import namedtuple
 
 from AnimeCrawler.log import get_logger
-from AnimeCrawler.log import get_logger
+from AnimeCrawler.mhyyy.searcher import Searcher
 from AnimeCrawler.mhyyy.spider import AnimeSpider
 from AnimeCrawler.utils import is_url
 
@@ -25,9 +24,10 @@ class BaseCommand:
     def handle(self, args):
         ...
 
-    @abc.abstractmethod
-    def catch_error(self, parse):
-        ...
+    @property
+    def base_error(self):
+        Errors = namedtuple("Errors", ('error_code', 'error_reason', 'output'))
+        return Errors
 
 
 class DownloadCommand(BaseCommand):
@@ -36,14 +36,12 @@ class DownloadCommand(BaseCommand):
             "-u",
             "--url",
             help="动漫第一集的url",
-            required=True,
         )
         parser.add_argument(
             "-t",
             "--title",
             metavar='Title',
             help="动漫名称",
-            required=True,
         )
         parser.add_argument(
             "--del_ts", dest='can_del_ts', help="删除ts文件", action='store_true'
@@ -51,25 +49,33 @@ class DownloadCommand(BaseCommand):
 
     def handle(self, args):
         if error := self.catch_error(args):
-            self.logger.error(error.output)
-        else:
-            print(args.title, args.url)
-            AnimeSpider.init(args.title, args.url, args.can_del_ts).start()
+            raise ValueError(f'{error.output}')
+        AnimeSpider.init(args.title, args.url, args.can_del_ts).start()
 
     def catch_error(self, parse):
-        Errors = namedtuple("Errors", ('error_code', 'error_reason', 'output'))
         if not parse.title:
-            return Errors('402', 'null_title', f'标题 {parse.title} 为空')
+            return self.base_error('402', 'null_title', '标题为空')
         elif not is_url(parse.url or ''):
-            return Errors('403', 'is_not_url', f'{parse.url} 不为合法的url')
+            return self.base_error('403', 'is_not_url', f'{parse.url} 不为合法的url')
 
 
 class SearchCommand(BaseCommand):
     def subcommand_add_arguments(self, parser):
-        ...
+        parser.add_argument(
+            "-t",
+            "--title",
+            metavar='Title',
+            help="动漫名称",
+        )
 
     def handle(self, args):
-        print(f'args = {args}')
+        if error := self.catch_error(args):
+            raise ValueError(f'{error.output}')
+        Searcher.init(args.title).start()
+
+    def catch_error(self, parse):
+        if not parse.title:
+            return self.base_error('402', 'null_title', '标题为空')
 
 
 def main():
