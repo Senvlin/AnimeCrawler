@@ -54,7 +54,6 @@ class AnimeSpider(BaseSpider):
         if self._mixed_m3u8 is None:
             self._mixed_m3u8 = text.split('\n')[-1]
         item.mixed_m3u8_url = await self.urljoin(item._base_m3u8_url, self._mixed_m3u8)
-        self.logger.info(f'{item.mixed_m3u8_url=}')
 
     def _parse_mixed_m3u8(self, item: AnimeItem):
         '''解析mixed.m3u8文件，获得ts文件下载地址

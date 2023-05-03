@@ -10,20 +10,14 @@ from AnimeCrawler.utils import write
 class Downloader:
     session = None
     logger = get_logger('Downloader')
-    instance = None
-
-    def __new__(cls, *args, **kwargs):
-        if cls.instance is None:
-            cls.instance = super().__new__(cls)
-        return cls.instance
 
     @property
     def current_session(self):
         if not self.session:
             self.session = aiohttp.ClientSession(
-                connector=aiohttp.TCPConnector(verify_ssl=False)
+                connector = aiohttp.TCPConnector(verify_ssl=False)
             )
-            self.logger.info('创建了session')
+            self.logger.debug('创建了session')
         return self.session
 
     @property
