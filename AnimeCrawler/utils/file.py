@@ -5,6 +5,31 @@ from typing import Union
 import aiofiles
 
 
+def align(_string, _length, _type='L') -> str:
+    """
+    Look at https://www.jianshu.com/p/74500b7dc278
+
+    中英文混合字符串对齐函数
+
+    :param _string:[str]需要对齐的字符串
+    :param _length:[int]对齐长度
+    :param _type:[str]对齐方式（'L'：默认，左对齐；'R'：右对齐；'C'或其他：居中对齐）
+    :return:[str]输出_string的对齐结果
+    """
+    _str_len = len(_string) + sum(u'\u4e00' <= _char <= u'\u9fff' for _char in _string)
+    _space = _length - _str_len  # 计算需要填充的空格数
+    if _type == 'L':  # 根据对齐方式分配空格
+        _left = 0
+        _right = _space
+    elif _type == 'R':
+        _left = _space
+        _right = 0
+    else:
+        _left = _space // 2
+        _right = _space - _left
+    return ' ' * _left + _string + ' ' * _right
+
+
 def folder_path(folder_path):
     '''判定文件夹是否存在，不存在就创建
 
