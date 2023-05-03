@@ -1,3 +1,4 @@
-ruia==0.8.5
-tqdm==4.65.0
-aiofiles==23.1.0
+ruia
+tqdm
+aiofiles
+aiohttp
