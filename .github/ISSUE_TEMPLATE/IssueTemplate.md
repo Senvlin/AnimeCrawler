@@ -5,6 +5,9 @@ about: 请按照这个格式写哦
 # Description:
 
 
+
+
+
 ## version: 
 _(AnimeCrawler版本：输入 `AnimeCrawler -h` 查看版本）_
 
@@ -16,5 +19,5 @@ _(AnimeCrawler版本：输入 `AnimeCrawler -h` 查看版本）_
 
 ## platform:
 - [ ] Windows
-- [ ] Linux
-- [ ] Mac
+- [ ] Linux _(Not Supported)_
+- [ ] Mac _(Not Supported)_
