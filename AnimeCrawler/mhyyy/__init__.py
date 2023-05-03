@@ -9,5 +9,5 @@ from AnimeCrawler.utils import (
 )
 
 from .downloader import Downloader
+from .searcher import Searcher
 from .spider import AnimeSpider
-
