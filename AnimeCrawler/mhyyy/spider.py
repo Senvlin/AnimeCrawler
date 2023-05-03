@@ -30,6 +30,7 @@ class AnimeSpider(BaseSpider):
     _mixed_m3u8 = None
     downloader = Downloader()
     headers = {'User-Agent': 'Mozilla/5.0'}
+    concurrency: int = 5
 
     @classmethod
     def init(cls, anime_title: str, urls: str, del_ts: bool = False):

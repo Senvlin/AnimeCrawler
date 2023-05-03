@@ -1,7 +1,9 @@
 import abc
+import abc
 import argparse
 from collections import namedtuple
 
+from AnimeCrawler.log import get_logger
 from AnimeCrawler.log import get_logger
 from AnimeCrawler.mhyyy.spider import AnimeSpider
 from AnimeCrawler.utils import is_url
