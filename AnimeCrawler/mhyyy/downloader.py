@@ -17,9 +17,6 @@ class Downloader:
             cls.instance = super().__new__(cls)
         return cls.instance
 
-    def __init__(self, urls):
-        self.urls = urls
-
     @property
     def current_session(self):
         if not self.session:
@@ -28,6 +25,17 @@ class Downloader:
             )
             self.logger.info('创建了session')
         return self.session
+
+    @property
+    def set_url(self, urls):
+        return urls
+
+    @set_url.setter
+    def set_url(self, urls):
+        self.urls = urls
+
+    async def close_session(self):
+        await self.current_session.close()
 
     async def get_ts_file(
         self,
@@ -55,16 +63,15 @@ class Downloader:
             resp.close()
 
     async def download_ts_files(self, path, episodes):
-        async with self.current_session as session:
-            tasks = [
-                self.get_ts_file(session, str(index).zfill(4), url)
-                for index, url in enumerate(self.urls)
-            ]
-            for task in tqdm.asyncio.tqdm.as_completed(
-                tasks, desc=f"正在下载第{episodes}集视频", delay=3
-            ):
-                result = await task
-                text_1, title = (
-                    (b'error', 'error') if result is None else result
-                )  # result为空时返回'error'
-                await write(path, text_1, title, suffix='ts', mode='wb')
+        tasks = [
+            self.get_ts_file(self.current_session, str(index).zfill(4), url)
+            for index, url in enumerate(self.urls)
+        ]
+        for task in tqdm.asyncio.tqdm.as_completed(
+            tasks, desc=f"正在下载第{episodes}集视频", delay=3
+        ):
+            result = await task
+            text_1, title = (
+                (b'error', 'error') if result is None else result
+            )  # result为空时返回'error'
+            await write(path, text_1, title, suffix='ts', mode='wb')

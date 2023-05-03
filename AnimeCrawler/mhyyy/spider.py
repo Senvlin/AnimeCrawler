@@ -28,7 +28,7 @@ class AnimeItem(Item):
 class AnimeSpider(BaseSpider):
     _base_ts_url = None
     _mixed_m3u8 = None
-    downloader = Downloader
+    downloader = Downloader()
     headers = {'User-Agent': 'Mozilla/5.0'}
 
     @classmethod
@@ -102,9 +102,14 @@ class AnimeSpider(BaseSpider):
         self.logger.info('\033[0;32;40m写入mixed.m3u8\033[0m')
         await write(folder_path, text, 'mixed', 'm3u8', 'w+')
         urls = self._parse_mixed_m3u8(item)
-        await self.downloader(urls).download_ts_files(folder_path, episodes)
+        self.downloader.set_url = urls
+        await self.downloader.download_ts_files(folder_path, episodes)
         self.logger.info(f"正在把第 {episodes} 集的ts文件转码成 mp4")
         await merge_ts2mp4(folder_path, episodes, self.del_ts)
+
+    async def stop(self, _signal):
+        await self.downloader.close_session()
+        return await super().stop(_signal)
 
 
 if __name__ == '__main__':
