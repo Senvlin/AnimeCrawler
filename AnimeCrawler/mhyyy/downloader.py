@@ -1,7 +1,8 @@
+import asyncio
+
 import aiohttp
 import tqdm.asyncio
 
-from AnimeCrawler.log import get_logger
 from AnimeCrawler.log import get_logger
 from AnimeCrawler.utils import write
 
@@ -11,7 +12,7 @@ class Downloader:
     logger = get_logger('Downloader')
 
     @property
-    def current_sesssion(self):
+    def current_session(self):
         if not self.session:
             self.session = aiohttp.ClientSession(
                 connector=aiohttp.TCPConnector(verify_ssl=False)
@@ -45,7 +46,7 @@ class Downloader:
             text = await resp.content.read()
             await asyncio.sleep(0)
             return (text, title)
-        except aiohttp.ClientPayloadError:  # 报错时重新下载
+        except aiohttp.ClientPayloadError as e:  # 报错时重新下载
             if error_times == 3:
                 raise Warning(f'下载{title}.ts时发生错误') from e
             print(f'下载{title}.ts时发生错误，正在重试第{error_times}次')

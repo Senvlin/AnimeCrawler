@@ -4,7 +4,6 @@ from pathlib import Path
 from ruia import Item, Response, TextField
 
 from AnimeCrawler.base_spider import BaseSpider
-from AnimeCrawler.log import get_logger
 from AnimeCrawler.utils import (
     base64_decode,
     folder_path,
@@ -54,7 +53,7 @@ class AnimeSpider(BaseSpider):
         text = await resp.text()
         if self._mixed_m3u8 is None:
             self._mixed_m3u8 = text.split('\n')[-1]
-        item.mixed_m3u8_url = await self.urljoin(item._base_m3u8_url, self._mixed_m3u8)
+        item.mixed_m3u8_url = self.urljoin(item._base_m3u8_url, self._mixed_m3u8)
 
     def _parse_mixed_m3u8(self, item: AnimeItem):
         '''解析mixed.m3u8文件，获得ts文件下载地址
@@ -72,7 +71,7 @@ class AnimeSpider(BaseSpider):
         # 当有下一页时
         link_next = link_next.replace('\\', '')
         return await self.follow(
-            await self.urljoin(self.domain, link_next),
+            self.urljoin(self.domain, link_next),
             callback=self.parse,
             headers=self.headers,
         )
@@ -110,7 +109,3 @@ class AnimeSpider(BaseSpider):
     async def stop(self, _signal):
         await self.downloader.close_session()
         return await super().stop(_signal)
-
-
-if __name__ == '__main__':
-    AnimeSpider.init('魔女之旅', ['https://www.mhyyy.com/play/166269-1-1.html']).start()
