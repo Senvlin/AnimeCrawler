@@ -7,22 +7,38 @@ from AnimeCrawler.utils import is_url
 
 
 class BaseSpider(Spider):
+    '''所有爬虫的基类，必须提供domain与downloader属性
+
+    Args:
+        Spider (ruia.Spider): 继承于ruia框架的爬虫
+
+    Raises:
+        ValueError: 未定义domain时报错
+        ValueError: 未定义downloader时报错
+
+    Returns:
+        cls: 为了链式调用ruia.Spider.start()
+    '''
+
     logger = get_logger('Spider')
+
+    def __init__(self, *args, **spider_kwargs):
+        super().__init__(*args, **spider_kwargs)
+        if not hasattr(self, 'domain'):
+            raise ValueError(f'{self.__class__.__name__} 未定义domain属性')
+        elif not hasattr(self, 'downloader'):
+            raise ValueError(f'{self.__class__.__name__} 未定义downloader下载器')
 
     @classmethod
     def init(cls):
-        if not hasattr(cls, 'domain'):
-            raise ValueError(f'{cls.__name__} 未定义domain属性')
-        if not hasattr(cls, 'downloader'):
-            raise ValueError(f'{cls.__name__} 未定义downloader下载器')
         cls.start_urls = [
             i if is_url(i) else urllib.parse.urljoin(cls.domain, i)
             for i in cls.start_urls
         ]  # 当url为相对路径时与域名拼接
         return cls
 
-    async def urljoin(self, base, url, avoid_collision: bool = False) -> str:
-        '''对urllib.parse.urljoin()的异步包装
+    def urljoin(self, base, url, avoid_collision: bool = False) -> str:
+        '''对urllib.parse.urljoin()的包装
 
         Args:
             base (str): 基础url
