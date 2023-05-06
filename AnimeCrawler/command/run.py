@@ -17,11 +17,11 @@ class BaseCommand:
     logger = get_logger('Command')
 
     @abc.abstractmethod
-    def subcommand_add_arguments(self, parser):
+    def subcommand_add_arguments(self, parser) -> None:
         ...
 
     @abc.abstractmethod
-    def handle(self, args):
+    def handle(self, args) -> None:
         ...
 
     @property
@@ -47,7 +47,7 @@ class DownloadCommand(BaseCommand):
             "--del_ts", dest='can_del_ts', help="删除ts文件", action='store_true'
         )
 
-    def handle(self, args):
+    def handle(self, args) -> None:
         if error := self.catch_error(args):
             raise ValueError(f'{error.output}')
         AnimeSpider.init(args.title, args.url, args.can_del_ts).start()
@@ -60,7 +60,7 @@ class DownloadCommand(BaseCommand):
 
 
 class SearchCommand(BaseCommand):
-    def subcommand_add_arguments(self, parser):
+    def subcommand_add_arguments(self, parser) -> None:
         parser.add_argument(
             "-t",
             "--title",
@@ -68,7 +68,7 @@ class SearchCommand(BaseCommand):
             help="动漫名称",
         )
 
-    def handle(self, args):
+    def handle(self, args) -> None:
         if error := self.catch_error(args):
             raise ValueError(f'{error.output}')
         Searcher.init(args.title).start()
@@ -81,12 +81,12 @@ class SearchCommand(BaseCommand):
 def main():
     subcommands = {
         'download': (DownloadCommand, '下载动漫'),
-        'search': (SearchCommand, '搜索动漫，未实现'),
+        'search': (SearchCommand, '搜索动漫'),
     }
     parser = argparse.ArgumentParser(
         prog='AnimeCrawler',
         formatter_class=argparse.RawDescriptionHelpFormatter,
-        description='* AnimeCrawler v0.1.2 - 一个可免费下载动漫的爬虫\n* Repo: https://github.com/Senvlin/AnimeCrawler',
+        description='* AnimeCrawler v0.2.0 - 一个可免费下载动漫的爬虫\n* Repo: https://github.com/Senvlin/AnimeCrawler',
         epilog='Had Issues? Go To -> https://github.com/Senvlin/AnimeCrawler/issues',
     )
     subparsers: argparse._SubParsersAction = parser.add_subparsers(prog='AnimeCrawler')
