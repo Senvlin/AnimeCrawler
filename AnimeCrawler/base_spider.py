@@ -1,6 +1,6 @@
 import urllib.parse
 
-from ruia import Spider
+from ruia import Request, Spider
 
 from AnimeCrawler.log import get_logger
 from AnimeCrawler.utils import is_url
@@ -22,7 +22,7 @@ class BaseSpider(Spider):
 
     logger = get_logger('Spider')
 
-    def __init__(self, *args, **spider_kwargs):
+    def __init__(self, *args, **spider_kwargs) -> None:
         super().__init__(*args, **spider_kwargs)
         if not hasattr(self, 'domain'):
             raise ValueError(f'{self.__class__.__name__} 未定义domain属性')
@@ -57,7 +57,7 @@ class BaseSpider(Spider):
             url = urllib.parse.urlunsplit(url_parts._replace(scheme='', netloc=''))
         return urllib.parse.urljoin(base, url)
 
-    async def follow(self, next_url: str = None, **kwargs):
+    async def follow(self, next_url: str = None, **kwargs) -> Request:
         '''爬取下一个页面
 
         Args:
@@ -66,14 +66,14 @@ class BaseSpider(Spider):
         Returns:
             ruia.Request: 可被yield
         '''
-        return self.request(await self.urljoin(self.domain, next_url), **kwargs)
+        return self.request(self.urljoin(self.domain, next_url), **kwargs)
 
-    def get_domain(self, url: str):
+    def get_domain(self, url: str) -> str:
         url_parts = urllib.parse.urlsplit(url)
         print(url)
         return '://'.join(url_parts[:2])  # e.g. https://docs.python.org/
 
-    def get_path(self, url: str):
+    def get_path(self, url: str) -> str:
         url_parts = urllib.parse.urlsplit(url)
         return url_parts.path
 

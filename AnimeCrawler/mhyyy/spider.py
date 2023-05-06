@@ -1,7 +1,8 @@
 import re
 from pathlib import Path
+from typing import AsyncGenerator
 
-from ruia import Item, Response, TextField
+from ruia import Item, Request, Response, TextField
 
 from AnimeCrawler.base_spider import BaseSpider
 from AnimeCrawler.utils import (
@@ -32,7 +33,7 @@ class AnimeSpider(BaseSpider):
     concurrency: int = 5
 
     @classmethod
-    def init(cls, anime_title: str, urls: str, del_ts: bool = False):
+    def init(cls, anime_title: str, urls: str, del_ts: bool = False) -> BaseSpider:
         '''初始化爬虫
 
         Args:
@@ -67,16 +68,18 @@ class AnimeSpider(BaseSpider):
                 if '#' not in i:
                     yield base_ts_file + i
 
-    async def have_next_page(self, link_next: str):
+    async def have_next_page(self, link_next: str) -> Request:
         # 当有下一页时
         link_next = link_next.replace('\\', '')
         return await self.follow(
-            self.urljoin(self.domain, link_next),
+            link_next,
             callback=self.parse,
             headers=self.headers,
         )
 
-    async def parse(self, response: Response):
+    async def parse(
+        self, response: Response
+    ) -> AsyncGenerator[Request | AnimeItem, None]:
         async for item in AnimeItem.get_items(html=await response.text()):
             profile = item.profile
             player_aaaa = eval(re.search('{.*}', profile).group())
@@ -93,7 +96,7 @@ class AnimeSpider(BaseSpider):
                 yield await self.have_next_page(link_next)
             yield item
 
-    async def process_item(self, item: AnimeItem):
+    async def process_item(self, item: AnimeItem) -> None:
         resp = await self.request(item.mixed_m3u8_url, headers=self.headers).fetch()
         text = await resp.text()
         episodes = item.episodes
@@ -106,6 +109,6 @@ class AnimeSpider(BaseSpider):
         self.logger.info(f"正在把第 {episodes} 集的ts文件转码成 mp4")
         await merge_ts2mp4(folder_path, episodes, self.del_ts)
 
-    async def stop(self, _signal):
+    async def stop(self, _signal) -> None:
         await self.downloader.close_session()
         return await super().stop(_signal)

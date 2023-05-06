@@ -1,4 +1,5 @@
 import asyncio
+from typing import Any, Union
 
 import aiohttp
 import tqdm.asyncio
@@ -12,7 +13,7 @@ class Downloader:
     logger = get_logger('Downloader')
 
     @property
-    def current_session(self):
+    def current_session(self) -> aiohttp.ClientSession:
         if not self.session:
             self.session = aiohttp.ClientSession(
                 connector=aiohttp.TCPConnector(verify_ssl=False)
@@ -21,14 +22,14 @@ class Downloader:
         return self.session
 
     @property
-    def set_url(self, urls):
+    def set_url(self, urls) -> str:
         return urls
 
     @set_url.setter
-    def set_url(self, urls):
+    def set_url(self, urls) -> None:
         self.urls = urls
 
-    async def close_session(self):
+    async def close_session(self) -> None:
         await self.current_session.close()
 
     async def get_ts_file(
@@ -37,7 +38,7 @@ class Downloader:
         title: str,
         url: str,
         error_times: int = 1,
-    ):
+    ) -> Union[tuple[bytes, str], Any]:
         resp = await session.get(
             url=url,
             headers={'User-Agent': 'Mozilla/5.0', ' Transfer-Encoding': 'chunked'},
