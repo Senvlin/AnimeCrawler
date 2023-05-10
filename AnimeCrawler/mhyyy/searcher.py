@@ -25,7 +25,7 @@ class SearchItem(Item):
 class Searcher(BaseSpider):
     session = None
     downloader = None
-    domain = 'https://www.mh620.com/'
+    domain = 'https://www.mh620.com'
     # logger = get_logger('Searcher')
 
     @classmethod
@@ -37,6 +37,8 @@ class Searcher(BaseSpider):
 
     async def select_anime(self, animes) -> None:
         answer = int(input('Which anime do you want to download? >>> '))
+        if answer <= 0:
+            return
         anime = animes[answer - 1][1]
         title, url = anime[0].replace(' ', '_'), self.domain + anime[1]
         print(

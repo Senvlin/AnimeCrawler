@@ -20,7 +20,7 @@ class BaseSpider(Spider):
         cls: 为了链式调用ruia.Spider.start()
     '''
 
-    logger = get_logger('Spider', 'WARNING')
+    logger = get_logger('Spider', 'INFO')
 
     def __init__(self, *args, **spider_kwargs) -> None:
         super().__init__(*args, **spider_kwargs)
