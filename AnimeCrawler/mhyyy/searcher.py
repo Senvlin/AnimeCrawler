@@ -25,7 +25,7 @@ class SearchItem(Item):
 class Searcher(BaseSpider):
     session = None
     downloader = None
-    domain = 'https://www.mhyyy.com'
+    domain = 'https://www.mh620.com/'
     # logger = get_logger('Searcher')
 
     @classmethod
