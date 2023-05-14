@@ -4,13 +4,13 @@ from typing import Any, Union
 import aiohttp
 import tqdm.asyncio
 
-from AnimeCrawler.log import get_logger
+from AnimeCrawler.log import Logger
 from AnimeCrawler.utils import write
 
 
 class Downloader:
     session = None
-    logger = get_logger('Downloader')
+    logger = Logger().get_logger()
 
     @property
     def current_session(self) -> aiohttp.ClientSession:
