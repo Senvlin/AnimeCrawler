@@ -2,8 +2,9 @@ import urllib.parse
 
 from ruia import Request, Spider
 
-from AnimeCrawler.log import get_logger
 from AnimeCrawler.utils import is_url
+
+from .log import Logger
 
 
 class BaseSpider(Spider):
@@ -20,17 +21,25 @@ class BaseSpider(Spider):
         cls: 为了链式调用ruia.Spider.start()
     '''
 
-    logger = get_logger('Spider', 'INFO')
+    logger = Logger()
 
-    def __init__(self, *args, **spider_kwargs) -> None:
-        super().__init__(*args, **spider_kwargs)
+    def __init__(
+        self,
+        *spider_args,
+        is_debug=False,
+        **spider_kwargs,
+    ) -> None:
+        super().__init__(*spider_args, **spider_kwargs)
         if not hasattr(self, 'domain'):
             raise ValueError(f'{self.__class__.__name__} 未定义domain属性')
         elif not hasattr(self, 'downloader'):
             raise ValueError(f'{self.__class__.__name__} 未定义downloader下载器')
 
     @classmethod
-    def init(cls):
+    def init(cls, is_debug):
+        if is_debug:
+            cls.logger.level = 'DEBUG'
+        cls.logger.get_logger('Spider')
         cls.start_urls = [
             i if is_url(i) else urllib.parse.urljoin(cls.domain, i)
             for i in cls.start_urls
@@ -70,7 +79,6 @@ class BaseSpider(Spider):
 
     def get_domain(self, url: str) -> str:
         url_parts = urllib.parse.urlsplit(url)
-        print(url)
         return '://'.join(url_parts[:2])  # e.g. https://docs.python.org/
 
     def get_path(self, url: str) -> str:
