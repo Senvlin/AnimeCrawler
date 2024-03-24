@@ -1,11 +1,13 @@
 import asyncio
+import ctypes.wintypes
 import pathlib
-from typing import AsyncGenerator, Optional
+import re
+from typing import AsyncGenerator, Generator, Iterable, Optional
+from urllib.parse import urljoin
+
 import aiofiles
 import aiohttp
-from urllib.parse import urljoin
-import ctypes.wintypes
-import re
+from bs4 import BeautifulSoup, NavigableString, Tag
 
 
 def get_video_path():
@@ -19,9 +21,14 @@ VIDEO_FOLDER_PATH = pathlib.Path(get_video_path())
 ANIME_NAME = "三体"
 
 
+class Anime: ...
+
+
 class M3u8:
     def __init__(
-        self, response: aiohttp.ClientResponse, file_path: Optional[str] = "ceshi.m3u8"
+        self,
+        response: aiohttp.ClientResponse,
+        file_path: Optional[str] = "ceshi.m3u8",
     ):
         self.response = response
         self.url = str(response.url)
@@ -65,7 +72,8 @@ class Ts:
 
 class Spider:
     headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) \
+            Chrome/122.0.0.0 Safari/537.36 Edg/122.0.0.0"
     }
 
     def __init__(self, ts_url_queue: asyncio.Queue = None) -> None:
@@ -127,18 +135,52 @@ class Spider:
         cwd = VIDEO_FOLDER_PATH / ANIME_NAME
         print(cwd)
         ts_file_paths = (path for path in cwd.iterdir() if path.suffix == ".ts")
-        async with aiofiles.open(cwd / ".mp4", "wb") as parent_fp:
+        async with aiofiles.open(cwd / f"{ANIME_NAME}.mp4", "wb") as parent_fp:
             for path in ts_file_paths:
                 async with aiofiles.open(path, "rb") as fp:
                     text = await fp.read()
                     await parent_fp.write(text)
 
 
+class EpisodeParser:
+    # DONE 完成对每一集信息的解析
+    # DONE 应先获得每一集信息，再从信息中过滤出url和name
+
+    def __init__(self, html_str) -> None:
+        self.root = BeautifulSoup(html_str, 'html.parser')
+
+    @property
+    def episode_infos(self) -> Generator:
+        play_tab_list = self.root.find('div', class_='module-list sort-list tab-list play-tab-list active')
+        infos = play_tab_list.find_all('a', class_='module-play-list-link')
+        for info in infos:
+            yield info
+
+    @property
+    def episode_url_parts(self):
+        for info in self.episode_infos:
+            yield info.attrs['href']
+
+    @property
+    def episode_names(self):
+        for info in self.episode_infos:
+            yield info.text.replace('\n', '')
+
+
 async def main(url):
-    spider = Spider()
-    await spider.run(url)
+    # spider = Spider()
+    # await spider.run(url)
     # await spider.merge_ts()
+    async with aiofiles.open("a.html", "r", encoding="utf-8") as fp:
+        html_str = await fp.read()
+    parser = EpisodeParser(html_str)
+    for url in parser.episode_names:
+        print(url)
 
 
 if __name__ == "__main__":
-    asyncio.run(main("https://vip.kuaikan-play2.com/20230824/IRyqtRYD/index.m3u8"))
+    asyncio.run(
+        main(
+            "https://svipsvip.ffzy-online5.com/20230930/17311_4c0bc7b2/index.m3u8"
+        )
+    )
