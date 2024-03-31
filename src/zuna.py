@@ -2,12 +2,14 @@ import asyncio
 import ctypes.wintypes
 import pathlib
 import re
-from dataclasses import Field, InitVar, dataclass, field
+from dataclasses import dataclass
+from enum import Enum
 from typing import AsyncGenerator, Generator, Optional
 from urllib.parse import urljoin
 
 import aiofiles
 import aiohttp
+import aiohttp.client_exceptions
 import lxml.html
 
 
@@ -24,7 +26,7 @@ ANIME_NAME = "三体"
 
 class Parser:
     def __init__(self, html_str) -> None:
-        self.root = lxml.html.fromstring(html_str)
+        self._root = lxml.html.fromstring(html_str)
 
 
 class M3u8Parser(Parser):
@@ -33,26 +35,26 @@ class M3u8Parser(Parser):
 
     @property
     def m3u8_url(self) -> str:
-        player_datas = self.root.xpath(
+        player_datas = self._root.xpath(
             '//div[@class="player-box-main"]/script[1]/text()'
         )
-        _m3u8_url = re.findall(r'"url":"(.*?)",', player_datas[0])[0]
+        _m3u8_url: str = re.findall(r'"url":"(.*?)",', player_datas[0])[0]
+        _m3u8_url = _m3u8_url.replace("\\", "")
         return _m3u8_url
 
 
-class EpisodeParser(Parser):
+class EpisodesParser(Parser):
     """对每一集信息的解析"""
-
-    # DONE 完成对每一集信息的解析
-    # DONE 应先获得每一集信息，再从信息中过滤出url和name
 
     def __init__(self, html_str) -> None:
         super(__class__, self).__init__(html_str)
 
     @property
     def episode_infos(self) -> Generator:
-        infos = self.root.xpath(
-            '//div[@class="module-list sort-list tab-list play-tab-list active"]/div/div/a'
+        infos = self._root.xpath(
+            '//div \
+            [@class="module-list sort-list tab-list play-tab-list active"] \
+            /div/div/a'
         )
         yield from infos
 
@@ -79,7 +81,6 @@ class M3u8:
         self.url = str(response.url)
         if not file_path.endswith(".m3u8"):
             raise Exception("文件后缀应为.m3u8")
-        # HACK 改一下保存逻辑
         self.file_path = VIDEO_FOLDER_PATH / ANIME_NAME / file_path
 
     async def save(self):
@@ -109,8 +110,8 @@ class Ts:
         self.name = response.url.parts[-1]
 
     async def save(self):
+        await asyncio.sleep(0)
         text = await self.response.content.read()
-        # HACK 改一下保存逻辑
         async with aiofiles.open(
             VIDEO_FOLDER_PATH / ANIME_NAME / self.name, "wb"
         ) as fp:
@@ -123,14 +124,9 @@ class Ts:
 @dataclass
 class Episode:
     name: str
-    root_url: InitVar[str]
-    episode_url_part: InitVar[str]
-    episode_url: Field[str] = field(init=False)
+    episode_url: Optional[str] = None
     m3u8_url: Optional[str] = None
     m3u8_path: Optional[str | pathlib.Path] = None
-
-    def __post_init__(self, root_url, episode_url_part: str):
-        self.episode_url = urljoin(root_url, episode_url_part)
 
 
 class Spider:
@@ -145,7 +141,6 @@ class Spider:
     def __init__(self, ts_url_queue: asyncio.Queue = None) -> None:
         self.ts_url_queue = ts_url_queue or asyncio.Queue()
         self.session = None
-        self.file_path = ...
 
     @property
     def request_session(self) -> aiohttp.ClientSession:
@@ -158,7 +153,7 @@ class Spider:
             self.session = aiohttp.ClientSession()
         return self.session
 
-    async def crawler(self):
+    async def _crawler(self):
         """相当于Worker，不断爬取文件，直到队列为空"""
         while not self.ts_url_queue.empty():
             url = await self.ts_url_queue.get()
@@ -178,8 +173,15 @@ class Spider:
         """
         async with self.request_session.get(url, headers=self.headers) as resp:
             ts_file = Ts(resp)
+            try:
+                await ts_file.save()
+            except aiohttp.client_exceptions.ClientPayloadError:
+                print(
+                    f"\033[91m URL: [{url}] has no content length,\
+                        retry it\033[0m"
+                )
+                await self.ts_url_queue.put(url)
             self.ts_url_queue.task_done()
-            await ts_file.save()
 
     async def m3u8_fetch(self, url) -> M3u8:
         """爬取一集的m3u8文件，为之后的ts文件解析做铺垫
@@ -209,12 +211,16 @@ class Spider:
         async for url in ts_urls:
             await self.ts_url_queue.put(url)
         workers = []
-        for _ in range(4):
-            workers.append(asyncio.create_task(self.crawler()))
+        for _ in range(3):
+            workers.append(asyncio.create_task(self._crawler()))
         await asyncio.gather(*workers)
 
         await self.ts_url_queue.join()
-        await self.request_session.close()
+
+    async def fetch_html(self, url):
+        async with self.request_session.get(url) as response:
+            html_str = await response.text()
+        return html_str
 
     async def merge_ts_files(self):
         """合并ts文件为mp4文件， 目录在 VIDEO_FOLDER_PATH / ANIME_NAME"""
@@ -228,19 +234,77 @@ class Spider:
                     await parent_fp.write(text)
 
 
-async def main(url):
+class EngineState(Enum):
+    init = 0
+    parsing = 1
+    running = 2
+    done = 3
+
+
+class Engine:
+    def __init__(
+        self,
+        episodes_parser=None,
+        m3u8_parser=None,
+        spider=None,
+        episodes_queue=None,
+    ) -> None:
+        self.spider = spider or Spider()
+        self.episodes_queue = episodes_queue or asyncio.Queue()
+        self._episodes_parser: EpisodesParser = (
+            episodes_parser or EpisodesParser
+        )
+        self._m3u8_parser: M3u8Parser = m3u8_parser or M3u8Parser
+        self.state = EngineState.init
+
+    async def init(self, root_url) -> None:
+        # TODO 初始化时创建文件夹
+        if self.state == EngineState.init:
+            html_str = await self.spider.fetch_html(root_url)
+            self.state = EngineState.parsing
+            print("Engine is parsing")
+        self.episodes_parser: EpisodesParser = self._episodes_parser(html_str)
+        for episode_name, episode_url_part in zip(
+            self.episodes_parser.episode_names,
+            self.episodes_parser.episode_url_parts,
+        ):
+            episode_url = urljoin(root_url, episode_url_part)
+            html_str = await self.spider.fetch_html(episode_url)
+            self.m3u8_parser = self._m3u8_parser(html_str)
+            # Episode(name, root_url, url_part, m3u8_url)
+
+            await self.episodes_queue.put(
+                Episode(episode_name, episode_url, self.m3u8_parser.m3u8_url)
+            )
+
+    async def start_crawl(self):
+        while not self.episodes_queue.empty():
+            episode = await self.episodes_queue.get()
+            print(episode)
+            await self.spider.run(episode.m3u8_url)
+
+    async def run(self, root_url):
+        await self.init(root_url)
+        self.state = EngineState.running
+        try:
+            await self.start_crawl()
+        except Exception as e:
+            self.state = EngineState.done
+            print(
+                f"\033[91m Error: [{e}] has been raised,\
+                    shut down the Program\033[0m"
+            )
+        finally:
+            await self.spider.request_session.close()
+
+
+async def main(root_url):
     # spider = Spider()
     # await spider.run(url)
     # await spider.merge_ts_files()
-    async with aiofiles.open("a.html", "r", encoding="utf-8") as fp:
-        html_str = await fp.read()
-    parser = M3u8Parser(html_str)
-    print(parser.m3u8_url)
+    engine = Engine()
+    await engine.run(root_url)
 
 
 if __name__ == "__main__":
-    asyncio.run(
-        main(
-            "https://svipsvip.ffzy-online5.com/20230930/17311_4c0bc7b2/index.m3u8"
-        )
-    )
+    asyncio.run(main("https://www.myd02.com/vodplay/139-3-1.html"))
