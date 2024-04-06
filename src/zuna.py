@@ -211,7 +211,7 @@ class Spider:
         async for url in ts_urls:
             await self.ts_url_queue.put(url)
         workers = []
-        for _ in range(3):
+        for _ in range(4):
             workers.append(asyncio.create_task(self._crawler()))
         await asyncio.gather(*workers)
 
@@ -244,38 +244,53 @@ class EngineState(Enum):
 class Engine:
     def __init__(
         self,
-        episodes_parser=None,
-        m3u8_parser=None,
         spider=None,
         episodes_queue=None,
     ) -> None:
         self.spider = spider or Spider()
         self.episodes_queue = episodes_queue or asyncio.Queue()
-        self._episodes_parser: EpisodesParser = (
-            episodes_parser or EpisodesParser
-        )
-        self._m3u8_parser: M3u8Parser = m3u8_parser or M3u8Parser
         self.state = EngineState.init
 
-    async def init(self, root_url) -> None:
+    async def init(self, root_url):
         # TODO 初始化时创建文件夹
         if self.state == EngineState.init:
             html_str = await self.spider.fetch_html(root_url)
             self.state = EngineState.parsing
             print("Engine is parsing")
-        self.episodes_parser: EpisodesParser = self._episodes_parser(html_str)
+        episodes_parser = EpisodesParser(html_str)
+        episodes,tasks = self._init_episodes(episodes_parser,root_url)
+        html_strs = await asyncio.gather(*tasks)
+        for episode,html_str in zip(episodes,html_strs):
+            m3u8_parser = M3u8Parser(html_str)
+            episode.m3u8_url = m3u8_parser.m3u8_url
+            await self.episodes_queue.put(episode)
+
+
+    def _init_episodes(self, episodes_parser: EpisodesParser, root_url):
+        """
+        # HACK 我承认这里有点奇怪，但是为了重复利用代码只好这么做了
+
+        Args:
+            episodes_parser (EpisodesParser): 每一集的解析器
+            root_url (str): 第一页的url
+
+        Returns:
+            tuple[list,list]: 第一个list是还没有填写m3u8_url的episode的列表
+                              第二个list是返回包装每一集url的人物列表，让函数外的gather执行
+                              以便获取每一集的html，然后获取m3u8_url
+        """
+        _tasks = []
+        _episodes = []
         for episode_name, episode_url_part in zip(
-            self.episodes_parser.episode_names,
-            self.episodes_parser.episode_url_parts,
+            episodes_parser.episode_names,
+            episodes_parser.episode_url_parts,
         ):
             episode_url = urljoin(root_url, episode_url_part)
-            html_str = await self.spider.fetch_html(episode_url)
-            self.m3u8_parser = self._m3u8_parser(html_str)
-            # Episode(name, root_url, url_part, m3u8_url)
+            _episodes.append(Episode(episode_name, episode_url))
+            _tasks.append(asyncio.create_task(self.spider.fetch_html(episode_url)))
+        return _episodes, _tasks
 
-            await self.episodes_queue.put(
-                Episode(episode_name, episode_url, self.m3u8_parser.m3u8_url)
-            )
+
 
     async def start_crawl(self):
         while not self.episodes_queue.empty():
@@ -299,9 +314,6 @@ class Engine:
 
 
 async def main(root_url):
-    # spider = Spider()
-    # await spider.run(url)
-    # await spider.merge_ts_files()
     engine = Engine()
     await engine.run(root_url)
 
