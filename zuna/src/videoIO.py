@@ -2,7 +2,7 @@ import pathlib
 
 import aiofiles
 
-from src.settings import ANIME_FOLDER_PATH
+from zuna.src.settings import ANIME_FOLDER_PATH
 
 
 class VideoIO:

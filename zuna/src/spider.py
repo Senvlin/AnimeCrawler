@@ -4,8 +4,9 @@ from typing import Optional
 from urllib.parse import urljoin
 
 import aiohttp
-from src.item import EpisodeItem, M3u8, Ts
-from src.settings import MAX_CONCURRENT_REQUESTS
+from zuna.src.item import EpisodeItem, M3u8, Ts
+from zuna.src.settings import MAX_CONCURRENT_REQUESTS
+
 
 class Spider:
     """主要爬取一集的m3u8文件和ts文件，并把ts文件合并为mp4文件"""
@@ -77,7 +78,9 @@ class Spider:
         async with self.request_session.get(
             m3u8_url, headers=self.headers
         ) as m3u8_resp:
-            m3u8 = M3u8(m3u8_resp, self._episode.name)
+            m3u8 = M3u8(
+                m3u8_resp, f"{self._episode.name}.m3u8", self._episode.name
+            )
             await m3u8.save()
         return m3u8
 

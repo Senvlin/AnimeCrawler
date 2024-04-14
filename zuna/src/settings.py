@@ -16,6 +16,8 @@ def get_video_path():
 
 _video_folder_path = get_video_path()
 # TODO 以后改成从配置文件中读取
-ANIME_NAME = "鬼灭之刃"
+ANIME_NAME = "test"
 ANIME_FOLDER_PATH = _video_folder_path / ANIME_NAME
-MAX_CONCURRENT_REQUESTS = 16 # 最大并发请求数 创建的worker不超过此数量 建议 <= 16
+MAX_CONCURRENT_REQUESTS = (
+    16  # 最大并发请求数 创建的worker不超过此数量 建议 <= 16
+)
