@@ -4,14 +4,9 @@ from typing import Generator
 import lxml.html
 
 
-class Parser:
+class M3u8Parser:
     def __init__(self, html_str) -> None:
         self._root = lxml.html.fromstring(html_str)
-
-
-class M3u8Parser(Parser):
-    def __init__(self, html_str) -> None:
-        super(__class__, self).__init__(html_str)
 
     @property
     def m3u8_url(self) -> str:
@@ -23,11 +18,11 @@ class M3u8Parser(Parser):
         return _m3u8_url
 
 
-class EpisodesParser(Parser):
+class EpisodesParser:
     """对每一集信息的解析"""
 
     def __init__(self, html_str) -> None:
-        super(__class__, self).__init__(html_str)
+        self._root = lxml.html.fromstring(html_str)
 
     @property
     def episode_infos(self) -> Generator:

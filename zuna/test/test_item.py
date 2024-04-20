@@ -4,9 +4,10 @@ from pathlib import Path
 from aiohttp import ClientResponse
 
 from zuna.src.item import M3u8
-from zuna.src.settings import ANIME_FOLDER_PATH
+from zuna.src.videoIO import anime_folder_path
 
 
+# TODO 单测优先
 class TestM3u8(unittest.TestCase):
     def setUp(self):
         self.response = MagicMock(spec=ClientResponse)
@@ -19,14 +20,14 @@ class TestM3u8(unittest.TestCase):
         print(f"{m3u8.file_path=}, {self.child_path=}")
         self.assertEqual(m3u8.url, "http://example.com/test.m3u8")
         self.assertEqual(
-            m3u8.file_path, ANIME_FOLDER_PATH / self.child_path / "test.m3u8"
+            m3u8.file_path, anime_folder_path / self.child_path / "test.m3u8"
         )
 
     def test_init_without_child_path(self):
         m3u8 = M3u8(self.response, file_name="test.m3u8")
-        self.assertEqual(m3u8.file_path, ANIME_FOLDER_PATH / "test.m3u8")
+        self.assertEqual(m3u8.file_path, anime_folder_path / "test.m3u8")
 
-    def test_init_file_name_suffix(self):
+    def test_init_file_suffix(self):
         suffixes = ["txt", "mp4", "mkv", "zip"]
         for i in suffixes:
             with self.assertRaises(Exception):

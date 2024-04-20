@@ -6,7 +6,7 @@ from urllib.parse import urljoin
 
 import aiofiles
 import aiohttp
-from zuna.src.settings import ANIME_FOLDER_PATH
+from zuna.src.videoIO import anime_folder_path
 
 
 class M3u8:
@@ -30,7 +30,7 @@ class M3u8:
 
         if not child_path:
             child_path = pathlib.Path(r"")
-        self.file_path = ANIME_FOLDER_PATH / child_path / file_name
+        self.file_path = anime_folder_path / child_path / file_name
 
     async def save(self):
         text = await self.response.content.read()
@@ -57,7 +57,7 @@ class Ts:
     def __init__(self, response: aiohttp.ClientResponse, _child_path):
         self.response = response
         self.file_name = response.url.parts[-1]
-        self.file_path = ANIME_FOLDER_PATH / _child_path / self.file_name
+        self.file_path = anime_folder_path / _child_path / self.file_name
 
     async def save(self):
         await asyncio.sleep(0)

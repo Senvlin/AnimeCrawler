@@ -9,7 +9,7 @@ from zuna.src.settings import MAX_CONCURRENT_REQUESTS
 
 
 class Spider:
-    """主要爬取一集的m3u8文件和ts文件，并把ts文件合并为mp4文件"""
+    """负责爬取任务"""
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) \

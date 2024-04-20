@@ -2,8 +2,24 @@ import pathlib
 
 import aiofiles
 
-from zuna.src.settings import ANIME_FOLDER_PATH
+from zuna.src.settings import ANIME_NAME
+import ctypes.wintypes
 
+
+def get_video_path():
+    """
+    获取系统中视频文件夹路径
+
+    Returns:
+        Path: 视频文件夹路径
+    """
+    buf = ctypes.create_unicode_buffer(ctypes.wintypes.MAX_PATH)
+    ctypes.windll.shell32.SHGetFolderPathW(None, 14, None, 0, buf)
+    return pathlib.Path(buf.value)
+
+
+_video_folder_path = get_video_path()
+anime_folder_path = _video_folder_path / ANIME_NAME
 
 class VideoIO:
     """对视频文件的输入输出"""
@@ -20,14 +36,14 @@ class VideoIO:
             print(f"Folder [{root_path}] already exists.")
 
     def create_anime_folder(self):
-        self._create_folder(ANIME_FOLDER_PATH)
+        self._create_folder(anime_folder_path)
 
     def create_episode_folder(self, episode_name: str):
-        self._create_folder(ANIME_FOLDER_PATH, episode_name)
+        self._create_folder(anime_folder_path, episode_name)
 
     async def merge_ts_files(self, episode_name):
         """合并ts文件为mp4文件"""
-        cwd = ANIME_FOLDER_PATH / episode_name
+        cwd = anime_folder_path / episode_name
         ts_file_paths = (path for path in cwd.iterdir() if path.suffix == ".ts")
         async with aiofiles.open(
             cwd / f"{episode_name}.mp4", "wb"
