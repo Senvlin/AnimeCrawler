@@ -22,7 +22,7 @@ class TestEngine(unittest.TestCase):
         self.engine = Engine()
 
     def test_run_without_crawl(self):
-        asyncio.run(_run(self.engine,self.root_url))
+        asyncio.run(_run(self.engine, self.root_url))
 
 
 if __name__ == "__main__":
