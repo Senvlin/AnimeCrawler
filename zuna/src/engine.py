@@ -8,7 +8,7 @@ from zuna.src.parser import EpisodesParser, M3u8Parser
 
 from zuna.src.spider import Spider
 from zuna.src.videoIO import VideoIO
-
+from zuna.src.logger import Logger
 
 class EngineState(Enum):
     init = 0
@@ -71,6 +71,7 @@ class Engine:
         spider=Spider(),
         episodes_queue=asyncio.Queue(),
         video_io=VideoIO(),
+        logger=Logger(__name__),
         episode_factory=EpisodeFactory,
         m3u8_parser=M3u8Parser,
         episodes_parser=EpisodesParser,
@@ -78,6 +79,7 @@ class Engine:
         self.spider = spider
         self.episodes_queue = episodes_queue
         self.video_io = video_io
+        self.logger = logger
         self.episode_factory = episode_factory
         self.m3u8_parser = m3u8_parser
         self.episodes_parser = episodes_parser
@@ -91,7 +93,7 @@ class Engine:
             # HACK 耗时多 启动慢
             html_str = await self.spider.fetch_html(root_url)
             self.state = EngineState.parsing
-            print("Engine is parsing")
+            self.logger.info("Engine is parsing")
             self.episode_factory = self.episode_factory(
                 root_url, self.episodes_parser, self.m3u8_parser
             )

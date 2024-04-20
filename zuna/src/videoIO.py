@@ -3,6 +3,7 @@ import pathlib
 import aiofiles
 
 from zuna.src.settings import ANIME_NAME
+from zuna.src.logger import Logger
 import ctypes.wintypes
 
 
@@ -21,9 +22,10 @@ def get_video_path():
 _video_folder_path = get_video_path()
 anime_folder_path = _video_folder_path / ANIME_NAME
 
+
 class VideoIO:
     """对视频文件的输入输出"""
-
+    logger = Logger(__name__)
     def _create_folder(
         self, root_path, _folder_name_or_path: pathlib.Path | str = None
     ):
@@ -31,9 +33,9 @@ class VideoIO:
             root_path /= _folder_name_or_path
         if not root_path.is_dir():
             root_path.mkdir()
-            print(f"Folder [{root_path}] is created successfully.")
+            self.logger.info(f"Folder [{root_path}] is created successfully.")
         else:
-            print(f"Folder [{root_path}] already exists.")
+            self.logger.warning(f"Folder [{root_path}] already exists.")
 
     def create_anime_folder(self):
         self._create_folder(anime_folder_path)
@@ -52,3 +54,4 @@ class VideoIO:
                 async with aiofiles.open(path, "rb") as fp:
                     text = await fp.read()
                     await parent_fp.write(text)
+        self.logger.info(f"Merge ts files to [{cwd / f'{episode_name}.mp4'}] successfully.")
