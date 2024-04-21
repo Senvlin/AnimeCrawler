@@ -23,8 +23,9 @@ class Logger:
 
     def _set_color(self, log_level):
         levelname = self.color_fmt.get(log_level)
+        # BUG  当format中有%(lineno)d时，不显示调用方的行号，而是此文件的函数中，调用的方法行号
         formatter = logging.Formatter(
-            f"%(asctime)s | [{levelname}] <%(name)s>:Line %(lineno)d | %(message)s",
+            f"%(asctime)s | [{levelname}] <%(name)s> | %(message)s",
         )
 
         self.console_handler.setFormatter(formatter)

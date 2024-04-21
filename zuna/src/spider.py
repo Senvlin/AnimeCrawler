@@ -4,13 +4,15 @@ from typing import Optional
 from urllib.parse import urljoin
 
 import aiohttp
+import aiohttp.client_exceptions
 from zuna.src.item import EpisodeItem, M3u8, Ts
 from zuna.src.settings import MAX_CONCURRENT_REQUESTS
+from zuna.src.logger import Logger
 
 
 class Spider:
     """负责爬取任务"""
-
+    logger = Logger(__name__)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
             AppleWebKit/537.36 (KHTML, like Gecko) \
@@ -40,9 +42,9 @@ class Spider:
         """相当于Worker，不断爬取文件，直到队列为空"""
         while not self.ts_url_queue.empty():
             url = await self.ts_url_queue.get()
-            print(f"Worker is processing URL: {url}")
+            self.logger.debug(f"Worker is processing URL: {url}")
             await self.ts_crawl(url)
-            print(f"\033[92m Worker finished processing URL: {url}\033[0m")
+            self.logger.debug(f"\033[92m Worker finished processing URL: {url}\033[0m")
 
     async def ts_crawl(self, url: str):
         """具体的爬取任务
@@ -55,7 +57,7 @@ class Spider:
             try:
                 await ts_file.save()
             except aiohttp.client_exceptions.ClientPayloadError:
-                print(
+                self.logger.error(
                     f"\033[91m URL: [{url}] has no content length,\
                         retry it\033[0m"
                 )
@@ -71,9 +73,8 @@ class Spider:
         Returns:
             M3u8
         """
-        async with self.request_session.get(url, headers=self.headers) as resp:
-            r = await resp.text()
-            m3u8_url_part = re.findall(r".*?.m3u8", r)[-1]
+        r = await self.fetch_html(url)
+        m3u8_url_part = re.findall(r".*?.m3u8", r)[-1]
         m3u8_url = urljoin(url, m3u8_url_part)
         async with self.request_session.get(
             m3u8_url, headers=self.headers
@@ -90,11 +91,11 @@ class Spider:
         return html_str
 
     async def run(self) -> None:
-        print("Getting m3u8...")
+        self.logger.debug("Getting m3u8...")
 
         m3u8 = await self.m3u8_fetch(self._episode.m3u8_url)
         ts_urls = m3u8.get_ts_urls()
-        print("Get m3u8 successfully")
+        self.logger.debug("\033[92mGet m3u8 successfully\033[0m")
         async for url in ts_urls:
             await self.ts_url_queue.put(url)
         workers = []
