@@ -1,13 +1,13 @@
-from pathlib import Path
 import unittest
-from zuna.src.videoIO import VideoIO
-from zuna.src.videoIO import _video_folder_path
+from pathlib import Path
+
+from zuna.src.videoIO import VideoIO, _video_folder_path
 
 
 class TestCreateAnimeFolder(unittest.TestCase):
     def setUp(self):
         self.videoIO = VideoIO()
-        self.anime_folder_path = _video_folder_path / 'test'
+        self.anime_folder_path = _video_folder_path / "test"
 
     def test_create_anime_folder(self):
         self.videoIO.create_anime_folder()

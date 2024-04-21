@@ -5,13 +5,15 @@ from urllib.parse import urljoin
 
 import aiohttp
 import aiohttp.client_exceptions
+
 from zuna.src.item import EpisodeItem, M3u8, Ts
-from zuna.src.settings import MAX_CONCURRENT_REQUESTS
 from zuna.src.logger import Logger
+from zuna.src.settings import MAX_CONCURRENT_REQUESTS
 
 
 class Spider:
     """负责爬取任务"""
+
     logger = Logger(__name__)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
@@ -44,7 +46,8 @@ class Spider:
             url = await self.ts_url_queue.get()
             self.logger.debug(f"Worker is processing URL: {url}")
             await self.ts_crawl(url)
-            self.logger.debug(f"\033[92m Worker finished processing URL: {url}\033[0m")
+            self.logger.debug(f"\033[92m Worker finished processing URL: \
+                                {url}\033[0m")
 
     async def ts_crawl(self, url: str):
         """具体的爬取任务

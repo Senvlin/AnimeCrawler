@@ -4,11 +4,11 @@ from typing import Any, AsyncGenerator
 from urllib.parse import urljoin
 
 from zuna.src.item import EpisodeItem
+from zuna.src.logger import Logger
 from zuna.src.parser import EpisodesParser, M3u8Parser
-
 from zuna.src.spider import Spider
 from zuna.src.videoIO import VideoIO
-from zuna.src.logger import Logger
+
 
 class EngineState(Enum):
     init = 0
@@ -85,8 +85,6 @@ class Engine:
         self.episodes_parser = episodes_parser
         self.state = EngineState.init
 
-    # HACK 对于 _init_episodes这一方法，不应放在engine类，而应该单独抽离出一个类(比如EpisodeFactory？)
-    # HACK 应把parser类放在__init__()中定义，成为类属性，而不是在方法中定义
     async def init(self, root_url):
         self.video_io.create_anime_folder()
         if self.state == EngineState.init:

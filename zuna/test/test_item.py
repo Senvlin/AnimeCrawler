@@ -1,6 +1,7 @@
 import unittest
-from unittest.mock import MagicMock
 from pathlib import Path
+from unittest.mock import MagicMock
+
 from aiohttp import ClientResponse
 
 from zuna.src.item import M3u8

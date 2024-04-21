@@ -1,6 +1,7 @@
+import asyncio
 import time
 import unittest
-import asyncio
+
 from zuna.src.engine import Engine
 
 

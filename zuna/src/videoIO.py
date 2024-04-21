@@ -1,10 +1,10 @@
+import ctypes.wintypes
 import pathlib
 
 import aiofiles
 
-from zuna.src.settings import ANIME_NAME
 from zuna.src.logger import Logger
-import ctypes.wintypes
+from zuna.src.settings import ANIME_NAME
 
 
 def get_video_path():
@@ -25,7 +25,9 @@ anime_folder_path = _video_folder_path / ANIME_NAME
 
 class VideoIO:
     """对视频文件的输入输出"""
+
     logger = Logger(__name__)
+
     def _create_folder(
         self, root_path, _folder_name_or_path: pathlib.Path | str = None
     ):
@@ -54,4 +56,6 @@ class VideoIO:
                 async with aiofiles.open(path, "rb") as fp:
                     text = await fp.read()
                     await parent_fp.write(text)
-        self.logger.info(f"Merge ts files to [{cwd / f'{episode_name}.mp4'}] successfully.")
+        self.logger.info(
+            f"Merge ts files to [{cwd / f'{episode_name}.mp4'}] successfully."
+        )

@@ -1,4 +1,5 @@
 import logging
+
 from zuna.src.settings import LOG_LEVEL
 
 
@@ -6,6 +7,7 @@ class Logger:
     """
     日志记录器
     """
+
     def __init__(self, name):
         self.logger = logging.getLogger(name)
         self.logger.setLevel(LOG_LEVEL)
@@ -17,13 +19,13 @@ class Logger:
             "error": "\033[91m%(levelname)s\033[0m",
             "warning": "\033[93m%(levelname)s\033[0m",
             "debug": "\033[37m%(levelname)s\033[0m",
-            "critical":"\033[1;31m%(levelname)s\033[0m",
+            "critical": "\033[1;31m%(levelname)s\033[0m",
             None: "%(levelname)s",
         }
 
     def _set_color(self, log_level):
         levelname = self.color_fmt.get(log_level)
-        # BUG  当format中有%(lineno)d时，不显示调用方的行号，而是此文件的函数中，调用的方法行号
+        # BUG  当format中有%(lineno)d时，不显示调用方的行号，而是此文件的函数中，调用的方法行号 #noqa: E501
         formatter = logging.Formatter(
             f"%(asctime)s | [{levelname}] <%(name)s> | %(message)s",
         )
@@ -45,17 +47,18 @@ class Logger:
     def debug(self, message):
         self._set_color("debug")
         self.logger.debug(message)
-    
+
     def critical(self, message):
         self._set_color("critical")
         self.logger.critical(message)
-        
+
+
 logger = Logger(__name__)
 
 if __name__ == "__main__":
-    print('---')
+    print("---")
     logger.debug("This is a debug message")
-    print('---')
+    print("---")
     # logger.info("This is an info message")
     # logger.warning("This is a warning message")
     # logger.error("This is an error message")
