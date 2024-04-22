@@ -2,7 +2,7 @@ import logging
 
 from zuna.src.settings import LOG_LEVEL
 
-
+# BUG 当使用tqdm显示进度条时，打印的日志会使进度条显示错位
 class Logger:
     """
     日志记录器
@@ -53,9 +53,8 @@ class Logger:
         self.logger.critical(message)
 
 
-logger = Logger(__name__)
-
 if __name__ == "__main__":
+    logger = Logger(__name__)
     print("---")
     logger.debug("This is a debug message")
     print("---")
