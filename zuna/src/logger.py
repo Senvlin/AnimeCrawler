@@ -2,6 +2,7 @@ import logging
 
 from zuna.src.settings import LOG_LEVEL
 
+
 # BUG 当使用tqdm显示进度条时，打印的日志会使进度条显示错位
 class Logger:
     """
@@ -14,6 +15,7 @@ class Logger:
         self.console_handler = logging.StreamHandler()
         self.logger.addHandler(self.console_handler)
 
+        #noqa: E501 日志颜色格式设置，这里没用colorama，是因为不想给整段日志加颜色，只给日志级别加颜色
         self.color_fmt = {
             "info": "\033[92m%(levelname)s\033[0m",
             "error": "\033[91m%(levelname)s\033[0m",
@@ -25,13 +27,13 @@ class Logger:
 
     def _set_color(self, log_level):
         levelname = self.color_fmt.get(log_level)
-        # BUG  当format中有%(lineno)d时，不显示调用方的行号，而是此文件的函数中，调用的方法行号 #noqa: E501
+        # BUG 当format中有%(lineno)d时，不显示调用方的行号，而是此文件的函数中，调用的方法行号 #noqa: E501
         formatter = logging.Formatter(
             f"%(asctime)s | [{levelname}] <%(name)s> | %(message)s",
         )
 
         self.console_handler.setFormatter(formatter)
-
+    #以下都是对外的接口
     def info(self, message):
         self._set_color("info")
         self.logger.info(message)

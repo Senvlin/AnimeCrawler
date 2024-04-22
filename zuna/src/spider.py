@@ -30,6 +30,7 @@ def retry(_logger:Logger, tries=4, delay=1):
             while _tries > 1:
                 try:
                     return await func(*args, **kwargs)
+                # 给Spider.ts_crawl()做适配
                 except aiohttp.client_exceptions.ClientPayloadError:
                     _logger.error(
                         "\033[91m The request has no content length, retry it\033[0m"  # noqa: E501
@@ -82,7 +83,7 @@ class Spider:
     async def _crawler(self):
         """相当于Worker，不断爬取文件，直到队列为空"""
 
-        def decorator(func):
+        def pbar_decorator(func):
             """
             tqdm的装饰器，用于显示进度条
             # HACK 能否单独抽出来一个装饰器，不在函数中定义
@@ -97,10 +98,12 @@ class Spider:
                         unit="ts_it",
                     )
                 result = await func(*args, **kwargs)
+                #noqa: E501 这里使用if...else，是为了等待队列中的任务全部完成后，才关闭进度条
                 if self._pbar.n < self._pbar.total:
                     self._pbar.update()
                 else:
                     self._pbar.close()
+                    # 为了下一集爬取显示进度条，这里需要重置为None
                     self._pbar = None
                 return result
 
@@ -109,7 +112,7 @@ class Spider:
         while not self.ts_url_queue.empty():
             url = await self.ts_url_queue.get()
             self.logger.debug(f"Worker is processing URL: {url}")
-            await decorator(self.ts_crawl)(url)
+            await pbar_decorator(self.ts_crawl)(url)
             self.logger.debug(
                 f"\033[92m Worker finished processing URL: {url}\033[0m"
             )
@@ -126,7 +129,7 @@ class Spider:
             ts_file = Ts(resp, self._episode.name)
             await ts_file.save()
 
-    async def m3u8_fetch(self, url) -> M3u8:
+    async def _m3u8_fetch(self, url) -> M3u8:
         """爬取一集的m3u8文件，为之后的ts文件解析做铺垫
 
         Args:
@@ -156,9 +159,10 @@ class Spider:
         self._episode: EpisodeItem = episode
         self.logger.debug("Getting m3u8...")
 
-        m3u8 = await self.m3u8_fetch(self._episode.m3u8_url)
+        m3u8 = await self._m3u8_fetch(self._episode.m3u8_url)
         ts_urls = m3u8.get_ts_urls()
         self.logger.debug("\033[92mGet m3u8 successfully\033[0m")
+        
         async for url in ts_urls:
             await self.ts_url_queue.put(url)
         workers = []
