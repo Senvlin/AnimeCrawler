@@ -1,6 +1,5 @@
 import asyncio
 from enum import Enum
-from typing import Any, AsyncGenerator
 from urllib.parse import urljoin
 
 from zuna.src.item import EpisodeItem
@@ -85,7 +84,7 @@ class Engine:
         self.episodes_parser = episodes_parser
         self.state = EngineState.init
 
-    async def init(self, root_url):
+    async def _init(self, root_url):
         self.video_io.create_anime_folder()
         if self.state == EngineState.init:
             # HACK 耗时多 启动慢
@@ -104,12 +103,11 @@ class Engine:
         while not self.episodes_queue.empty():
             episode: EpisodeItem = await self.episodes_queue.get()
             self.video_io.create_episode_folder(episode.name)
-            self.spider.set_episode(episode)
-            await self.spider.run()
+            await self.spider.run(episode)
             await self.video_io.merge_ts_files(episode.name)
 
     async def run(self, root_url):
-        await self.init(root_url)
+        await self._init(root_url)
         self.state = EngineState.running
         try:
             await self.start_crawl()
@@ -120,5 +118,5 @@ class Engine:
         #             shut down the Program\033[0m"
         #     )
         finally:
-            await self.spider.request_session.close()
+            await self.spider.close()
             self.state = EngineState.done
