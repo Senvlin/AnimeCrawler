@@ -1,10 +1,11 @@
 import asyncio
 
-from src.engine import Engine
+from zuna.src.engine import Engine
+
+engine = Engine()
 
 
 async def main(root_url):
-    engine = Engine()
     await engine.run(root_url)
 
 
