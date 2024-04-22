@@ -25,8 +25,7 @@ class EpisodeFactory:
         self.episodes_parser = episodes_parser
 
     async def create_episodes(self, spider, html_str):
-        episodes_parser = self.episodes_parser(html_str)
-        m3u8_parser = self.m3u8_parser(html_str)
+        episodes_parser, m3u8_parser = self._init_parser(html_str)
         episodes, tasks = self._init_episodes(
             self.root_url, spider, episodes_parser
         )
@@ -36,6 +35,11 @@ class EpisodeFactory:
             m3u8_parser = self.m3u8_parser(_html_str)
             episode.m3u8_url = m3u8_parser.m3u8_url
             yield episode
+
+    def _init_parser(self, html_str) -> tuple[EpisodesParser, M3u8Parser]:
+        episodes_parser = self.episodes_parser(html_str)
+        m3u8_parser = self.m3u8_parser(html_str)
+        return episodes_parser, m3u8_parser
 
     def _init_episodes(self, root_url, spider: Spider, episodes_parser):
         """
@@ -84,10 +88,9 @@ class Engine:
         self.episodes_parser = episodes_parser
         self.state = EngineState.init
 
-    async def _init(self, root_url):
+    async def _init_episodes_queue(self, root_url):
         self.video_io.create_anime_folder()
         if self.state == EngineState.init:
-            # HACK 耗时多 启动慢
             html_str = await self.spider.fetch_html(root_url)
             self.state = EngineState.parsing
             self.logger.info("Engine is parsing")
@@ -99,7 +102,7 @@ class Engine:
         ):
             await self.episodes_queue.put(episode)
 
-    async def start_crawl(self):
+    async def _start_crawl(self):
         while not self.episodes_queue.empty():
             episode: EpisodeItem = await self.episodes_queue.get()
             self.video_io.create_episode_folder(episode.name)
@@ -107,10 +110,10 @@ class Engine:
             await self.video_io.merge_ts_files(episode.name)
 
     async def run(self, root_url):
-        await self._init(root_url)
+        await self._init_episodes_queue(root_url)
         self.state = EngineState.running
         try:
-            await self.start_crawl()
+            await self._start_crawl()
 
         # except Exception as e:
         #     print(
