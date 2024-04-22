@@ -1,14 +1,48 @@
 import asyncio
 import re
+from functools import wraps
 from typing import Optional
 from urllib.parse import urljoin
 
 import aiohttp
 import aiohttp.client_exceptions
+from tqdm import tqdm
 
 from zuna.src.item import EpisodeItem, M3u8, Ts
 from zuna.src.logger import Logger
 from zuna.src.settings import MAX_CONCURRENT_REQUESTS
+
+
+def retry(_logger:Logger, tries=4, delay=1):
+    """
+    一个用于异步函数的重试装饰器
+
+    Args:
+        _logger (logger): 日志记录器
+        tries (int, optional): 最大重试次数. 默认为4次.
+        delay (int, optional): 延迟. 默认为1秒.
+    """
+
+    def decorator(func):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            _tries, _delay = tries, delay
+            while _tries > 1:
+                try:
+                    return await func(*args, **kwargs)
+                except aiohttp.client_exceptions.ClientPayloadError:
+                    _logger.error(
+                        "\033[91m The request has no content length, retry it\033[0m"  # noqa: E501
+                    )
+
+                except Exception as e:
+                    _logger.error(f"\033[91m 报错了, {e}\033[0m")
+                    await asyncio.sleep(_delay)
+                    _tries -= 1
+
+        return wrapper
+
+    return decorator
 
 
 class Spider:
@@ -25,6 +59,7 @@ class Spider:
         self.ts_url_queue = ts_url_queue or asyncio.Queue()
         self.session = None
         self._episode: Optional[EpisodeItem] = None
+        self._pbar: Optional[tqdm] = None
 
     @property
     def request_session(self) -> aiohttp.ClientSession:
@@ -37,18 +72,50 @@ class Spider:
             self.session = aiohttp.ClientSession()
         return self.session
 
-    def set_episode(self, episode):
-        self._episode = episode
+    async def close(self):
+        """
+        关闭session
+        """
+        if self.session is not None:
+            await self.session.close()
 
     async def _crawler(self):
         """相当于Worker，不断爬取文件，直到队列为空"""
+
+        def decorator(func):
+            """
+            tqdm的装饰器，用于显示进度条
+            # HACK 能否单独抽出来一个装饰器，不在函数中定义
+            """
+
+            @wraps(func)
+            async def wrapper(*args, **kwargs):
+                if self._pbar is None:
+                    self._pbar = tqdm(
+                        total=self.ts_url_queue.qsize(),
+                        desc=f"正在下载{self._episode.name}",
+                        unit="ts_it",
+                    )
+                result = await func(*args, **kwargs)
+                if self._pbar.n < self._pbar.total:
+                    self._pbar.update()
+                else:
+                    self._pbar.close()
+                    self._pbar = None
+                return result
+
+            return wrapper
+
         while not self.ts_url_queue.empty():
             url = await self.ts_url_queue.get()
             self.logger.debug(f"Worker is processing URL: {url}")
-            await self.ts_crawl(url)
-            self.logger.debug(f"\033[92m Worker finished processing URL: \
-                                {url}\033[0m")
+            await decorator(self.ts_crawl)(url)
+            self.logger.debug(
+                f"\033[92m Worker finished processing URL: {url}\033[0m"
+            )
+            self.ts_url_queue.task_done()
 
+    @retry(Logger("crawler"))
     async def ts_crawl(self, url: str):
         """具体的爬取任务
 
@@ -57,15 +124,7 @@ class Spider:
         """
         async with self.request_session.get(url, headers=self.headers) as resp:
             ts_file = Ts(resp, self._episode.name)
-            try:
-                await ts_file.save()
-            except aiohttp.client_exceptions.ClientPayloadError:
-                self.logger.error(
-                    f"\033[91m URL: [{url}] has no content length,\
-                        retry it\033[0m"
-                )
-                await self.ts_url_queue.put(url)
-            self.ts_url_queue.task_done()
+            await ts_file.save()
 
     async def m3u8_fetch(self, url) -> M3u8:
         """爬取一集的m3u8文件，为之后的ts文件解析做铺垫
@@ -93,7 +152,8 @@ class Spider:
             html_str = await response.text()
         return html_str
 
-    async def run(self) -> None:
+    async def run(self, episode) -> None:
+        self._episode: EpisodeItem = episode
         self.logger.debug("Getting m3u8...")
 
         m3u8 = await self.m3u8_fetch(self._episode.m3u8_url)
@@ -104,6 +164,6 @@ class Spider:
         workers = []
         for _ in range(MAX_CONCURRENT_REQUESTS):
             workers.append(asyncio.create_task(self._crawler()))
-        await asyncio.gather(*workers)
 
+        await asyncio.gather(*workers)
         await self.ts_url_queue.join()
