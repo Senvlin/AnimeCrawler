@@ -1,19 +1,25 @@
-import unittest
 from pathlib import Path
+import unittest
 from unittest.mock import MagicMock
 
 from aiohttp import ClientResponse
 
 from zuna.src.item import M3u8
-from zuna.src.videoIO import anime_folder_path
+from zuna.src.videoIO import VideoIO
+
+
 
 
 # TODO 单测优先
 class TestM3u8(unittest.TestCase):
     def setUp(self):
+        video_io = VideoIO()
+        video_io.create_anime_folder()
+        self.anime_folder_path = video_io.anime_folder_path
         self.response = MagicMock(spec=ClientResponse)
         self.response.url = "http://example.com/test.m3u8"
         self.child_path = Path("test")
+        
 
     def test_init(self):
         # 正常情况
@@ -21,12 +27,13 @@ class TestM3u8(unittest.TestCase):
         print(f"{m3u8.file_path=}, {self.child_path=}")
         self.assertEqual(m3u8.url, "http://example.com/test.m3u8")
         self.assertEqual(
-            m3u8.file_path, anime_folder_path / self.child_path / "test.m3u8"
+            m3u8.file_path,
+            self.anime_folder_path / self.child_path / "test.m3u8",
         )
 
     def test_init_without_child_path(self):
         m3u8 = M3u8(self.response, file_name="test.m3u8")
-        self.assertEqual(m3u8.file_path, anime_folder_path / "test.m3u8")
+        self.assertEqual(m3u8.file_path, self.anime_folder_path / "test.m3u8")
 
     def test_init_file_suffix(self):
         suffixes = ["txt", "mp4", "mkv", "zip"]
@@ -43,6 +50,9 @@ class TestM3u8(unittest.TestCase):
         with self.assertRaises(Exception):
             M3u8(123, "test.m3u8", self.child_path)
 
+    def tearDown(self):
+        self.anime_folder_path.rmdir()
+()
 
 if __name__ == "__main__":
     unittest.main(buffer=True)
