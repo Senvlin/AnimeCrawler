@@ -3,7 +3,7 @@ from typing import Generator
 
 import lxml.html
 
-
+# TODO 用@dataclasses重构代码
 class M3u8Parser:
     def __init__(self, html_str) -> None:
         self._root = lxml.html.fromstring(html_str)

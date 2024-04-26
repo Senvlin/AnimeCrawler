@@ -130,7 +130,7 @@ class Spider:
             url (str): 要爬取的url
         """
         async with self.request_session.get(url, headers=self.headers) as resp:
-            ts_file = Ts(resp, self._episode.name)
+            ts_file = Ts(resp,self._episode.name)
             await ts_file.save()
 
     async def _m3u8_fetch(self, url) -> M3u8:

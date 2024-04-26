@@ -97,10 +97,12 @@ class Engine:
             self.episode_factory = self.episode_factory(
                 root_url, self.episodes_parser, self.m3u8_parser
             )
+        self.logger.debug("filling the episodes queue")
         async for episode in self.episode_factory.create_episodes(
             self.spider, html_str
         ):
             await self.episodes_queue.put(episode)
+        self.logger.debug("episodes queue is filled")
 
     async def _start_crawl(self):
         while not self.episodes_queue.empty():
@@ -114,12 +116,6 @@ class Engine:
         self.state = EngineState.running
         try:
             await self._start_crawl()
-
-        # except Exception as e:
-        #     print(
-        #         f"\033[91m Error: [{e}] has been raised,\
-        #             shut down the Program\033[0m"
-        #     )
         finally:
             await self.spider.close()
             self.state = EngineState.done

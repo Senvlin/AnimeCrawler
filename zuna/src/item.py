@@ -41,6 +41,7 @@ class M3u8(MediaItem):
     ):
         super().__init__(response, _child_path)
         self.url = str(response.url)
+        
         self.file_path = self.parent_path / file_name
 
         if file_name and not file_name.endswith(".m3u8"):
@@ -71,7 +72,7 @@ class M3u8(MediaItem):
 class Ts(MediaItem):
     """对ts文件的包装"""
 
-    def __init__(self, response: aiohttp.ClientResponse, _child_path):
+    def __init__(self, response: aiohttp.ClientResponse, _child_path=None):
         super().__init__(response, _child_path)
         self.file_name = response.url.parts[-1]
         self.file_path = self.parent_path / self.file_name

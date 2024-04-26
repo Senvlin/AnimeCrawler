@@ -52,10 +52,11 @@ class VideoIO:
         以至于创建文件夹时，仍然使用旧的名称，名称错误
         现在，在修改完anime_name后，engine类会调用此方法，所以以上两行代码可以解决这个问题
         """
+        anime_folder_path = self.anime_folder_path
         if _folder_name_or_path:
-            self.anime_folder_path /= _folder_name_or_path
-        if not self.anime_folder_path.is_dir():
-            self.anime_folder_path.mkdir()
+            anime_folder_path /= _folder_name_or_path
+        if not anime_folder_path.is_dir():
+            anime_folder_path.mkdir()
             self.logger.info(
                 f"Folder [{self.anime_folder_path}] is created successfully."
             )
