@@ -7,36 +7,52 @@ from urllib.parse import urljoin
 import aiofiles
 import aiohttp
 
-from zuna.src.videoIO import anime_folder_path
+from zuna.src.videoIO import VideoIO
 
 
-class M3u8:
-    """对m3u8文件的包装"""
+class MediaItem:
+    """对媒体文件的包装"""
+
+    videoIO = VideoIO()
 
     def __init__(
         self,
         response: aiohttp.ClientResponse,
-        file_name: str,
-        child_path=None,
+        _child_path,
     ):
         if not isinstance(response, aiohttp.ClientResponse):
             raise ValueError(
                 f"response必须为aiohttp.ClientResponse类型,而不是f{type(response)}"
             )
         self.response = response
+        if not _child_path:
+            _child_path = pathlib.Path(r"")
+        self.parent_path = self.videoIO.anime_folder_path / _child_path
+
+
+class M3u8(MediaItem):
+    """对m3u8文件的包装"""
+
+    def __init__(
+        self,
+        response: aiohttp.ClientResponse,
+        file_name: str,
+        _child_path=None,
+    ):
+        super().__init__(response, _child_path)
         self.url = str(response.url)
+        self.file_path = self.parent_path / file_name
 
         if file_name and not file_name.endswith(".m3u8"):
             raise ValueError("文件后缀应为.m3u8")
 
-        if not child_path:
-            child_path = pathlib.Path(r"")
-        self.file_path = anime_folder_path / child_path / file_name
+        if not _child_path:
+            _child_path = pathlib.Path(r"")
+        self.file_path = self.parent_path / file_name
 
     async def save(self):
         text = await self.response.content.read()
-        async with aiofiles.open(self.file_path, "wb") as fp:
-            await fp.write(text)
+        await self.videoIO.save_file(self.file_path, text)
 
     async def get_ts_urls(self) -> AsyncGenerator:
         async with aiofiles.open(self.file_path, "r") as fp:
@@ -52,19 +68,22 @@ class M3u8:
         return f"<M3u8File path={self.file_path}>"
 
 
-class Ts:
+class Ts(MediaItem):
     """对ts文件的包装"""
 
     def __init__(self, response: aiohttp.ClientResponse, _child_path):
-        self.response = response
+        super().__init__(response, _child_path)
         self.file_name = response.url.parts[-1]
-        self.file_path = anime_folder_path / _child_path / self.file_name
+        self.file_path = self.parent_path / self.file_name
 
     async def save(self):
-        await asyncio.sleep(0)
-        text = await self.response.content.read()
         async with aiofiles.open(self.file_path, "wb") as fp:
-            await fp.write(text)
+            while True:
+                chunk = await self.response.content.read(81920)
+                await asyncio.sleep(0)
+                if not chunk:
+                    break
+                await fp.write(chunk)
 
     def __repr__(self) -> str:
         return f"<TsFile Name={self.file_name}>"
