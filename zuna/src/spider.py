@@ -8,12 +8,12 @@ import aiohttp
 import aiohttp.client_exceptions
 from tqdm import tqdm
 
+from zuna.src.config import Config
 from zuna.src.item import EpisodeItem, M3u8, Ts
 from zuna.src.logger import Logger
-from zuna.src.settings import MAX_CONCURRENT_REQUESTS
 
 
-def retry(_logger:Logger, tries=4, delay=1):
+def retry(_logger: Logger, tries=4, delay=1):
     """
     一个用于异步函数的重试装饰器
 
@@ -31,7 +31,7 @@ def retry(_logger:Logger, tries=4, delay=1):
                 try:
                     return await func(*args, **kwargs)
                 # 给Spider.ts_crawl()做适配
-                except aiohttp.client_exceptions.ClientPayloadError:
+                except aiohttp.client_exceptions.ClientPayloadError as e:
                     _logger.error(
                         "\033[91m The request has no content length, retry it\033[0m"  # noqa: E501
                     )
@@ -49,6 +49,7 @@ def retry(_logger:Logger, tries=4, delay=1):
 class Spider:
     """负责爬取任务"""
 
+    a = Config()
     logger = Logger(__name__)
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) \
@@ -57,6 +58,9 @@ class Spider:
     }
 
     def __init__(self, ts_url_queue: Optional[asyncio.Queue] = None) -> None:
+        self.max_concurrent_requests = self.a.config.getint(
+            "download", "MAX_CONCURRENT_REQUESTS"
+        )
         self.ts_url_queue = ts_url_queue or asyncio.Queue()
         self.session = None
         self._episode: Optional[EpisodeItem] = None
@@ -98,7 +102,7 @@ class Spider:
                         unit="ts_it",
                     )
                 result = await func(*args, **kwargs)
-                #noqa: E501 这里使用if...else，是为了等待队列中的任务全部完成后，才关闭进度条
+                # noqa: E501 这里使用if...else，是为了等待队列中的任务全部完成后，才关闭进度条
                 if self._pbar.n < self._pbar.total:
                     self._pbar.update()
                 else:
@@ -162,11 +166,11 @@ class Spider:
         m3u8 = await self._m3u8_fetch(self._episode.m3u8_url)
         ts_urls = m3u8.get_ts_urls()
         self.logger.debug("\033[92mGet m3u8 successfully\033[0m")
-        
+
         async for url in ts_urls:
             await self.ts_url_queue.put(url)
         workers = []
-        for _ in range(MAX_CONCURRENT_REQUESTS):
+        for _ in range(self.max_concurrent_requests):
             workers.append(asyncio.create_task(self._crawler()))
 
         await asyncio.gather(*workers)

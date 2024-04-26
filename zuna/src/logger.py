@@ -1,6 +1,6 @@
 import logging
 
-from zuna.src.settings import LOG_LEVEL
+from zuna.src.config import Config
 
 
 # BUG 当使用tqdm显示进度条时，打印的日志会使进度条显示错位
@@ -9,13 +9,16 @@ class Logger:
     日志记录器
     """
 
+    _cfg = Config()
+
     def __init__(self, name):
+        log_level = self._cfg.config.get("common", "log_level")
         self.logger = logging.getLogger(name)
-        self.logger.setLevel(LOG_LEVEL)
+        self.logger.setLevel(log_level)
         self.console_handler = logging.StreamHandler()
         self.logger.addHandler(self.console_handler)
 
-        #noqa: E501 日志颜色格式设置，这里没用colorama，是因为不想给整段日志加颜色，只给日志级别加颜色
+        # noqa: E501 日志颜色格式设置，这里没用colorama，是因为不想给整段日志加颜色，只给日志级别加颜色
         self.color_fmt = {
             "info": "\033[92m%(levelname)s\033[0m",
             "error": "\033[91m%(levelname)s\033[0m",
@@ -33,7 +36,8 @@ class Logger:
         )
 
         self.console_handler.setFormatter(formatter)
-    #以下都是对外的接口
+
+    # 以下都是对外的接口
     def info(self, message):
         self._set_color("info")
         self.logger.info(message)
