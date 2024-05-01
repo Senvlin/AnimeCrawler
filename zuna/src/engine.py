@@ -23,25 +23,27 @@ class EpisodeFactory:
         self.root_url = root_url
         self.m3u8_parser = m3u8_parser
         self.episodes_parser = episodes_parser
+        self.episodes_list = list()
+        self.logger = Logger("EpisodeFactory")
 
     async def create_episodes(self, spider, html_str):
-        episodes_parser, m3u8_parser = self._init_parser(html_str)
-        episodes, tasks = self._init_episodes(
+        episodes_parser = self.episodes_parser(html_str)
+        tasks = self._init_episodes(
             self.root_url, spider, episodes_parser
         )
         html_strs = await asyncio.gather(*tasks)
-        for episode, _html_str in zip(episodes, html_strs):
-            episode: EpisodeItem
-            m3u8_parser = self.m3u8_parser(_html_str)
-            episode.m3u8_url = m3u8_parser.m3u8_url
+        for episode, _html_str in zip(self.episodes_list, html_strs):
+            self.logger.debug("adding m3u8_url to episode")
+            episode = self._add_m3u8_url(episode, _html_str)
+            self.logger.debug("m3u8_url is added")
             yield episode
 
-    def _init_parser(self, html_str) -> tuple[EpisodesParser, M3u8Parser]:
-        episodes_parser = self.episodes_parser(html_str)
-        m3u8_parser = self.m3u8_parser(html_str)
-        return episodes_parser, m3u8_parser
+    def _add_m3u8_url(self, episode: EpisodeItem, _html_str):
+        m3u8_parser = self.m3u8_parser(_html_str)
+        episode.m3u8_url = m3u8_parser.m3u8_url
+        return episode
 
-    def _init_episodes(self, root_url, spider: Spider, episodes_parser):
+    def _init_episodes(self, root_url, spider: Spider, episodes_parser:EpisodesParser):
         """
         HACK 我承认这里有点奇怪，但是为了重复利用代码只好这么做了
 
@@ -49,23 +51,18 @@ class EpisodeFactory:
 
         Args:
             episodes_parser (EpisodesParser): 每一集的解析器
+            spider (Spider): 爬虫模块
             root_url (str): 第一页的url
 
         Returns:
-            tuple[list,list]: 第一个list是还没有填写m3u8_url的episode的列表
-                              第二个list是返回包装每一集url的列表，让函数外的gather执行
-                              以便获取每一集的html，然后获取m3u8_url
+            list: 返回包装每一集url请求的列表，让函数外的gather执行,以便获取每一集的html，然后获取m3u8_url
         """
         _tasks = []
-        _episodes = []
-        for episode_name, episode_url_part in zip(
-            episodes_parser.episode_names,
-            episodes_parser.episode_url_parts,
-        ):
-            episode_url = urljoin(root_url, episode_url_part)
-            _episodes.append(EpisodeItem(episode_name, episode_url))
-            _tasks.append(asyncio.create_task(spider.fetch_html(episode_url)))
-        return _episodes, _tasks
+        for url_part, name in episodes_parser.episode_infos:
+            _url = urljoin(root_url, url_part)
+            self.episodes_list.append(EpisodeItem(name, _url))
+            _tasks.append(asyncio.create_task(spider.fetch_html(_url)))
+        return _tasks
 
 
 class Engine:
@@ -109,6 +106,7 @@ class Engine:
             episode: EpisodeItem = await self.episodes_queue.get()
             self.video_io.create_episode_folder(episode.name)
             await self.spider.run(episode)
+            self.logger.debug("merging ts files to mp4 file")
             await self.video_io.merge_ts_files(episode.name)
 
     async def run(self, root_url):
