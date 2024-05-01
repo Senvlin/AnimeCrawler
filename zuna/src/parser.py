@@ -15,7 +15,9 @@ class M3u8Parser:
         player_datas = self._root.xpath(
             '//div[@class="player-box-main"]/script[1]/text()'
         )
-        _m3u8_url: str = re.findall(r'"url":"(.*?)",', player_datas[0])[0].replace("\\", "")
+        print(player_datas)
+        _origin_text: str = re.findall(r'"url":"(.*?)",', player_datas[0])
+        _m3u8_url = _origin_text[0].replace("\\", "")
         return _m3u8_url
 
 class EpisodesParser:
@@ -23,33 +25,28 @@ class EpisodesParser:
 
     def __init__(self, html_str) -> None:
         self._root = lxml.html.fromstring(html_str)
-
+        
+    @property
+    def episode_infos(self) -> Generator:
+        yield from self.parse()
+        
     def parse(self):
         """
         对外的接口，解析每一集的信息
 
-        Returns:
-            Iterable: [Required] 一集的信息
+        Yields:
+            Iterable[tuple[url: str, name: str]]: [Required] \
+                                     每一集的信息，包含episode_url和episode_name
         """
-        # HACK episode_url_parts episode_names 都依赖于此 想要把解析逻辑分离还得再改改
         
         infos = self._root.xpath(
             '//div \
             [@class="module-list sort-list tab-list play-tab-list active"] \
             /div/div/a'
         )
-        return infos
+        for info in infos:
+            url = info.attrib["href"]
+            name = info.xpath("span/text()")[0]
+            yield url, name
 
-    @property
-    def episode_infos(self) -> Generator:
-        yield from self.parse()
 
-    @property
-    def episode_url_parts(self):
-        for info in self.episode_infos:
-            yield info.attrib["href"]
-
-    @property
-    def episode_names(self):
-        for info in self.episode_infos:
-            yield info.xpath("span/text()")[0]
