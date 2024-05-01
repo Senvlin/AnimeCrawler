@@ -155,7 +155,7 @@ class Spider:
         return m3u8
 
     async def fetch_html(self, url):
-        async with self.request_session.get(url) as response:
+        async with self.request_session.get(url,headers=self.headers) as response:
             html_str = await response.text()
         return html_str
 
