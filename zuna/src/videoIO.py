@@ -50,7 +50,7 @@ class VideoIO:
         当初始化代码时，Config类会直接读取配置文件，将anime_name设置为之前的名称
         即使使用命令行修改后，Config.config中的anime_name并没有更新。
         以至于创建文件夹时，仍然使用旧的名称，名称错误
-        
+
         现在，VideoIO会惰性初始化self.anime_folder_path，可以解决这个问题
         前提是你需要调用一遍方法来创建文件夹
         """

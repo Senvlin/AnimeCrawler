@@ -28,9 +28,7 @@ class EpisodeFactory:
 
     async def create_episodes(self, spider, html_str):
         episodes_parser = self.episodes_parser(html_str)
-        tasks = self._init_episodes(
-            self.root_url, spider, episodes_parser
-        )
+        tasks = self._init_episodes(self.root_url, spider, episodes_parser)
         html_strs = await asyncio.gather(*tasks)
         for episode, _html_str in zip(self.episodes_list, html_strs):
             self.logger.debug("adding m3u8_url to episode")
@@ -43,7 +41,9 @@ class EpisodeFactory:
         episode.m3u8_url = m3u8_parser.m3u8_url
         return episode
 
-    def _init_episodes(self, root_url, spider: Spider, episodes_parser:EpisodesParser):
+    def _init_episodes(
+        self, root_url, spider: Spider, episodes_parser: EpisodesParser
+    ):
         """
         HACK 我承认这里有点奇怪，但是为了重复利用代码只好这么做了
 
@@ -55,7 +55,8 @@ class EpisodeFactory:
             root_url (str): 第一页的url
 
         Returns:
-            list: 返回包装每一集url请求的列表，让函数外的gather执行,以便获取每一集的html，然后获取m3u8_url
+            list: 返回包装每一集url请求的列表，
+                让函数外的gather执行,以便获取每一集的html，然后获取m3u8_url
         """
         _tasks = []
         for url_part, name in episodes_parser.episode_infos:
@@ -71,7 +72,7 @@ class Engine:
         spider=Spider(),
         episodes_queue=asyncio.Queue(),
         video_io=VideoIO(),
-        logger=Logger(__name__),
+        logger=Logger("Engine"),
         episode_factory=EpisodeFactory,
         m3u8_parser=M3u8Parser,
         episodes_parser=EpisodesParser,

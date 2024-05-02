@@ -1,5 +1,5 @@
-from pathlib import Path
 import unittest
+from pathlib import Path
 from unittest.mock import MagicMock
 
 from aiohttp import ClientResponse
@@ -8,9 +8,6 @@ from zuna.src.item import M3u8
 from zuna.src.videoIO import VideoIO
 
 
-
-
-# TODO 单测优先
 class TestM3u8(unittest.TestCase):
     def setUp(self):
         video_io = VideoIO()
@@ -19,7 +16,6 @@ class TestM3u8(unittest.TestCase):
         self.response = MagicMock(spec=ClientResponse)
         self.response.url = "http://example.com/test.m3u8"
         self.child_path = Path("test")
-        
 
     def test_init(self):
         # 正常情况
@@ -52,6 +48,8 @@ class TestM3u8(unittest.TestCase):
 
     def tearDown(self):
         self.anime_folder_path.rmdir()
+
+
 ()
 
 if __name__ == "__main__":
