@@ -1,13 +1,12 @@
 import asyncio
-import sys
 
 import click
 
 from zuna.src.config import Config
 from zuna.src.engine import Engine
+from zuna.src.query import Query
 
 cfg = Config()
-
 
 @click.group()
 @click.version_option(
@@ -17,6 +16,12 @@ cfg = Config()
 )
 def cli(): ...
 
+@cli.command(help="Search for anime")
+@click.option("-n", "--anime_name", help="The name of the anime", required=True)
+def search(anime_name):
+    query = Query()
+    asyncio.run(query.search(anime_name))
+    query.pretty_print()
 
 @cli.command(help="Download anime from the given url")
 @click.option(
@@ -27,6 +32,7 @@ def cli(): ...
 )
 @click.option("-n", "--anime_name", help="The name of the anime", required=True)
 def download(root_url, anime_name):
+    engine = Engine()
     cfg.config["common"]["anime_name"] = anime_name
     asyncio.run(engine.run(root_url))
 
@@ -42,15 +48,13 @@ def download(root_url, anime_name):
     default=16,
 )
 def config(log_level, max_concurrent_requests):
+
     if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
         raise click.BadParameter("Invalid log level")
     cfg.config["common"]["log_level"] = log_level
     cfg.config["download"]["max_concurrent_requests"] = str(
         max_concurrent_requests
     )
-
-
-engine = Engine()
 
 if __name__ == "__main__":
     cli()
