@@ -31,7 +31,7 @@ def retry(_logger: Logger, tries=4, delay=1):
                 try:
                     return await func(*args, **kwargs)
                 # 给Spider.ts_crawl()做适配
-                except aiohttp.client_exceptions.ClientPayloadError as e:
+                except aiohttp.client_exceptions.ClientPayloadError:
                     _logger.error(
                         "\033[91m The request has no content length, retry it\033[0m"  # noqa: E501
                     )
@@ -130,7 +130,7 @@ class Spider:
             url (str): 要爬取的url
         """
         async with self.request_session.get(url, headers=self.headers) as resp:
-            ts_file = Ts(resp,self._episode.name)
+            ts_file = Ts(resp, self._episode.name)
             await ts_file.save()
 
     async def _m3u8_fetch(self, url) -> M3u8:
@@ -155,7 +155,9 @@ class Spider:
         return m3u8
 
     async def fetch_html(self, url):
-        async with self.request_session.get(url,headers=self.headers) as response:
+        async with self.request_session.get(
+            url, headers=self.headers
+        ) as response:
             html_str = await response.text()
         return html_str
 
