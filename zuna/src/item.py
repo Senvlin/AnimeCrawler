@@ -41,7 +41,7 @@ class M3u8(MediaItem):
     ):
         super().__init__(response, _child_path)
         self.url = str(response.url)
-        
+
         self.file_path = self.parent_path / file_name
 
         if file_name and not file_name.endswith(".m3u8"):
@@ -96,3 +96,11 @@ class EpisodeItem:
     episode_url: Optional[str] = None
     m3u8_url: Optional[str] = None
     m3u8_path: Optional[str | pathlib.Path] = None
+
+
+@dataclass(frozen=True,slots=True)
+class AnimeItem:
+    name: str
+    episode_state: str
+    player_url: str
+    detail_url: str
