@@ -17,7 +17,6 @@ class M3u8Parser:
         player_datas = self._root.xpath(
             '//div[@class="player-box-main"]/script[1]/text()'
         )
-        print(player_datas)
         _origin_text: str = re.findall(r'"url":"(.*?)",', player_datas[0])
         _m3u8_url = _origin_text[0].replace("\\", "")
         return _m3u8_url
@@ -97,4 +96,5 @@ class AnimeParser:
             )
             # 返回解析结果时，会以(player_url, detail_url)的形式返回
             player_url, detail_url = relevant_urls[0], relevant_urls[1]
+            # FIXME 返回时，必须要按照AnimeItem的属性顺序返回，否则无法正确赋值
             yield name, episode_state, player_url, detail_url
