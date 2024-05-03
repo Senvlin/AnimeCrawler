@@ -8,20 +8,31 @@ from zuna.src.query import Query
 
 cfg = Config()
 
+
 @click.group()
 @click.version_option(
-    version="0.1.0",
+    version="1.0.0",
     prog_name="Zuna",
     message="%(prog)s [v%(version)s] - A simple anime downloader",
 )
 def cli(): ...
+
 
 @cli.command(help="Search for anime")
 @click.option("-n", "--anime_name", help="The name of the anime", required=True)
 def search(anime_name):
     query = Query()
     asyncio.run(query.search(anime_name))
-    query.pretty_print()
+    for fmt_result in query.format_result():
+        click.echo(fmt_result)
+    # 选择番剧
+    index = click.prompt(
+        "Please enter the number of the anime you want to download",
+        type=click.IntRange(1, len(query.anime_list)),
+    )
+    anime = query.select_anime(index)
+    query.generate_download_command(anime)
+
 
 @cli.command(help="Download anime from the given url")
 @click.option(
@@ -48,13 +59,13 @@ def download(root_url, anime_name):
     default=16,
 )
 def config(log_level, max_concurrent_requests):
-
     if log_level not in ("DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"):
         raise click.BadParameter("Invalid log level")
     cfg.config["common"]["log_level"] = log_level
     cfg.config["download"]["max_concurrent_requests"] = str(
         max_concurrent_requests
     )
+
 
 if __name__ == "__main__":
     cli()
