@@ -98,7 +98,7 @@ class EpisodeItem:
     m3u8_path: Optional[str | pathlib.Path] = None
 
 
-@dataclass(frozen=True,slots=True)
+@dataclass(frozen=True, slots=True)
 class AnimeItem:
     name: str
     episode_state: str
