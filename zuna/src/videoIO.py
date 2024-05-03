@@ -60,12 +60,10 @@ class VideoIO:
         if not anime_folder_path.is_dir():
             anime_folder_path.mkdir()
             self.logger.info(
-                f"Folder [{self.anime_folder_path}] is created successfully."
+                f"Folder [{anime_folder_path}] is created successfully."
             )
         else:
-            self.logger.warning(
-                f"Folder [{self.anime_folder_path}] already exists."
-            )
+            self.logger.warning(f"Folder [{anime_folder_path}] already exists.")
 
     def create_anime_folder(self):
         self._create_folder()
@@ -89,5 +87,6 @@ class VideoIO:
         )
 
     async def save_file(self, path, content):
+        # BUG 当文件名又臭又长时，会导致文件名过长，无法保存
         async with aiofiles.open(path, "wb") as fp:
             await fp.write(content)
