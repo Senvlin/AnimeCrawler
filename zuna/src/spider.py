@@ -37,6 +37,7 @@ def retry(_logger: Logger, tries=4, delay=1):
                     )
 
                 except Exception as e:
+                    # BUG 报错为ClientPayloadError时，不会执行下列代码
                     _logger.error(f"\033[91m 报错了, {e}\033[0m")
                     await asyncio.sleep(_delay)
                     _tries -= 1
@@ -129,7 +130,9 @@ class Spider:
         Args:
             url (str): 要爬取的url
         """
-        async with self.request_session.get(url, headers=self.headers) as resp:
+        async with self.request_session.get(
+            url, headers=self.headers, timeout=60
+        ) as resp:
             ts_file = Ts(resp, self._episode.name)
             await ts_file.save()
 
