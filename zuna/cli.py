@@ -4,9 +4,10 @@ import click
 
 from src.config import Config
 from src.engine import Engine
+from src.item import AnimeItem
 from src.query import Query
 
-cfg = Config()
+cfg: Config = Config()
 
 
 @click.group()
@@ -21,18 +22,21 @@ def cli(): ...
 @cli.command(help="Search for anime")
 @click.option("-n", "--anime_name", help="The name of the anime", required=True)
 def search(anime_name):
-    query = Query()
+    query: Query = Query()
     asyncio.run(query.search(anime_name))
     for fmt_result in query.format_result():
         click.echo(fmt_result)
     # 选择番剧
-    index = click.prompt(
+    index: int = click.prompt(
         "Please enter the number of the anime you want to download",
         type=click.IntRange(1, len(query.anime_list)),
     )
-    anime = query.select_anime(index)
+    anime: AnimeItem = query.select_anime(index)
     query.generate_download_command(anime)
-    click.echo(f"Download command for {anime.name} has been created and copied to clipboard")
+    click.echo(
+        f"Download command for {anime.name} has been created \
+          and copied to clipboard successfully"
+    )
 
 
 @cli.command(help="Download anime from the given url")
