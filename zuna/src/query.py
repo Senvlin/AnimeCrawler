@@ -105,9 +105,7 @@ class Query:
         generate download command by given anime
         """
         whole_url = f"https://shoubozhan.com{anime.player_url}"
-        command = (
-            f"py cli.py download -n {anime.name} -u {whole_url}"
-        )
+        command = f"py cli.py download -n {anime.name} -u {whole_url}"
         _copy(command)
         return command
 
