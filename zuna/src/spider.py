@@ -8,9 +8,9 @@ import aiohttp
 import aiohttp.client_exceptions
 from tqdm import tqdm
 
-from zuna.src.config import Config
-from zuna.src.item import EpisodeItem, M3u8, Ts
-from zuna.src.logger import Logger
+from src.config import Config
+from src.item import EpisodeItem, M3u8, Ts
+from src.logger import Logger
 
 
 def retry(_logger: Logger, tries=4, delay=1):
@@ -38,6 +38,7 @@ def retry(_logger: Logger, tries=4, delay=1):
 
                 except Exception as e:
                     # BUG 报错为ClientPayloadError时，不会执行下列代码
+                    # 有趣的是，即使报ClientPayloadError，.ts文件也会正常下载到本地 (04.05.2024 测试)
                     _logger.error(f"\033[91m 报错了, {e}\033[0m")
                     await asyncio.sleep(_delay)
                     _tries -= 1
