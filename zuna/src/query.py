@@ -106,7 +106,7 @@ class Query:
         """
         whole_url = f"https://shoubozhan.com{anime.player_url}"
         command = (
-            f"py start.py download -n {anime.name} -u {whole_url}"
+            f"py cli.py download -n {anime.name} -u {whole_url}"
         )
         _copy(command)
         return command
