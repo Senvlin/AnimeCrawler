@@ -21,17 +21,15 @@ class Config:
         程序退出时持久化配置到配置文件.
         """
         if (
-            config_file := Path("zuna\\config\\config.ini")
+            config_file := Path(".\\config\\config.ini")
         ) and config_file.exists():
             try:
                 self.config.read(config_file, encoding="utf-8")
             except Exception:
                 pass
         else:
-            logging.warn(
-                f"config file '{config_file}' not exists. \
-                    Will using default values."
-            )
+            config_file.touch()
+            self._create_new_config()
 
         # 程序退出时保存配置到配置文件
         def sync_to_disk():
@@ -40,6 +38,13 @@ class Config:
                 self.config.write(f)
 
         atexit.register(sync_to_disk)
+
+    def _create_new_config(self):
+        self.config.add_section("common")
+        self.config.set("common", "log_level", "INFO")
+        self.config.set("common", "anime_name", "None")
+        self.config.add_section("download")
+        self.config.set("download", "max_concurrent_requests", "16")
 
 
 if __name__ == "__main__":
