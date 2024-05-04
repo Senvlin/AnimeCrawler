@@ -39,16 +39,15 @@ class M3u8(MediaItem):
         file_name: str,
         _child_path=None,
     ):
-        super().__init__(response, _child_path)
-        self.url = str(response.url)
-
-        self.file_path = self.parent_path / file_name
-
         if file_name and not file_name.endswith(".m3u8"):
             raise ValueError("文件后缀应为.m3u8")
 
         if not _child_path:
             _child_path = pathlib.Path(r"")
+
+        super().__init__(response, _child_path)
+        self.url = str(response.url)
+
         self.file_path = self.parent_path / file_name
 
     async def save(self):
@@ -90,7 +89,7 @@ class Ts(MediaItem):
         return f"<TsFile Name={self.file_name}>"
 
 
-@dataclass
+@dataclass(slots=True)
 class EpisodeItem:
     name: str
     episode_url: Optional[str] = None
