@@ -2,11 +2,11 @@ import asyncio
 from enum import Enum
 from urllib.parse import urljoin
 
-from zuna.src.item import EpisodeItem
-from zuna.src.logger import Logger
-from zuna.src.parser import EpisodesParser, M3u8Parser
-from zuna.src.spider import Spider
-from zuna.src.videoIO import VideoIO
+from src.item import EpisodeItem
+from src.logger import Logger
+from src.parser import EpisodesParser, M3u8Parser
+from src.spider import Spider
+from src.videoIO import VideoIO
 
 
 class EngineState(Enum):

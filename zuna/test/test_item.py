@@ -4,8 +4,8 @@ from unittest.mock import MagicMock
 
 from aiohttp import ClientResponse
 
-from zuna.src.item import M3u8
-from zuna.src.videoIO import VideoIO
+from src.item import M3u8
+from src.videoIO import VideoIO
 
 
 class TestM3u8(unittest.TestCase):

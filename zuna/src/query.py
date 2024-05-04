@@ -2,9 +2,9 @@ import asyncio
 import os
 from dataclasses import asdict
 
-from zuna.src.item import AnimeItem
-from zuna.src.parser import AnimeParser
-from zuna.src.spider import Spider
+from src.item import AnimeItem
+from src.parser import AnimeParser
+from src.spider import Spider
 
 
 def _align(_string, _length, _type="L") -> str:
@@ -106,7 +106,7 @@ class Query:
         """
         whole_url = f"https://shoubozhan.com{anime.player_url}"
         command = (
-            f"py zuna/cli/start.py download -n {anime.name} -u {whole_url}"
+            f"py start.py download -n {anime.name} -u {whole_url}"
         )
         _copy(command)
         return command

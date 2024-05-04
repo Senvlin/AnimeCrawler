@@ -2,7 +2,7 @@ import asyncio
 import time
 import unittest
 
-from zuna.src.engine import Engine
+from src.engine import Engine
 
 
 async def _run(engine, root_url):

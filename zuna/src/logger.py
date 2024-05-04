@@ -1,6 +1,6 @@
 import logging
 
-from zuna.src.config import Config
+from src.config import Config
 
 
 # BUG 当使用tqdm显示进度条时，打印的日志会使进度条显示错位

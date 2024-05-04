@@ -1,7 +1,7 @@
 import unittest
 from pathlib import Path
 
-from zuna.src.videoIO import VideoIO, _video_folder_path
+from src.videoIO import VideoIO, _video_folder_path
 
 
 class TestCreateAnimeFolder(unittest.TestCase):

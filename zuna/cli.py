@@ -2,9 +2,9 @@ import asyncio
 
 import click
 
-from zuna.src.config import Config
-from zuna.src.engine import Engine
-from zuna.src.query import Query
+from src.config import Config
+from src.engine import Engine
+from src.query import Query
 
 cfg = Config()
 

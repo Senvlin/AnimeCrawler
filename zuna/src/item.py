@@ -7,7 +7,7 @@ from urllib.parse import urljoin
 import aiofiles
 import aiohttp
 
-from zuna.src.videoIO import VideoIO
+from src.videoIO import VideoIO
 
 
 class MediaItem:

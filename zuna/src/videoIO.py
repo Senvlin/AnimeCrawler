@@ -3,8 +3,8 @@ import pathlib
 
 import aiofiles
 
-from zuna.src.config import Config
-from zuna.src.logger import Logger
+from src.config import Config
+from src.logger import Logger
 
 
 def get_video_path():
