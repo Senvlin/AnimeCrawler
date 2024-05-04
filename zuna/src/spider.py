@@ -13,6 +13,7 @@ from src.item import EpisodeItem, M3u8, Ts
 from src.logger import Logger
 
 
+
 def retry(_logger: Logger, tries=4, delay=1):
     """
     一个用于异步函数的重试装饰器
@@ -32,14 +33,11 @@ def retry(_logger: Logger, tries=4, delay=1):
                     return await func(*args, **kwargs)
                 # 给Spider.ts_crawl()做适配
                 except aiohttp.client_exceptions.ClientPayloadError:
-                    _logger.error(
-                        "\033[91m The request has no content length, retry it\033[0m"  # noqa: E501
-                    )
-
+                    ...
                 except Exception as e:
                     # BUG 报错为ClientPayloadError时，不会执行下列代码
-                    # 有趣的是，即使报ClientPayloadError，.ts文件也会正常下载到本地 (04.05.2024 测试)
-                    _logger.error(f"\033[91m 报错了, {e}\033[0m")
+                    # noqa: E501 有趣的是，即使报ClientPayloadError，.ts文件也会正常下载到本地 (04.05.2024 测试)
+                    _logger.error(f"\033[91m 报错了 {e}\033[0m")
                     await asyncio.sleep(_delay)
                     _tries -= 1
 
