@@ -32,6 +32,7 @@ def search(anime_name):
     )
     anime = query.select_anime(index)
     query.generate_download_command(anime)
+    click.echo(f"Download command for {anime.name} has been created and copied to clipboard")
 
 
 @cli.command(help="Download anime from the given url")
