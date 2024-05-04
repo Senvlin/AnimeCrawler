@@ -20,7 +20,7 @@ def cli(): ...
 
 
 @cli.command(help="Search for anime")
-@click.option("-n", "--anime_name", help="The name of the anime", required=True)
+@click.argument("anime_name", type=str)
 def search(anime_name):
     query: Query = Query()
     asyncio.run(query.search(anime_name))
@@ -34,8 +34,7 @@ def search(anime_name):
     anime: AnimeItem = query.select_anime(index)
     query.generate_download_command(anime)
     click.echo(
-        f"Download command for {anime.name} has been created \
-          and copied to clipboard successfully"
+        f"Download command for {anime.name} has been created and copied to clipboard successfully" # noqa: E501
     )
 
 
@@ -47,10 +46,16 @@ def search(anime_name):
     required=True,
 )
 @click.option("-n", "--anime_name", help="The name of the anime", required=True)
-def download(root_url, anime_name):
+@click.option(
+    "--del_ts",
+    help="Delete the downloaded ts files after merging",
+    is_flag=True,
+)
+def download(root_url, anime_name, del_ts):
     engine = Engine()
     cfg.config["common"]["anime_name"] = anime_name
-    asyncio.run(engine.run(root_url))
+    print(del_ts)
+    asyncio.run(engine.run(root_url, del_ts))
 
 
 @cli.command(help="Configure the program")

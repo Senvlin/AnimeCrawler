@@ -102,19 +102,28 @@ class Engine:
             await self.episodes_queue.put(episode)
         self.logger.debug("episodes queue is filled")
 
-    async def _start_crawl(self):
+    async def _start_crawl(self,*args):
         while not self.episodes_queue.empty():
             episode: EpisodeItem = await self.episodes_queue.get()
             self.video_io.create_episode_folder(episode.name)
             await self.spider.run(episode)
             self.logger.debug("merging ts files to mp4 file")
             await self.video_io.merge_ts_files(episode.name)
+            self.logger.debug("ts files are merged to mp4 file")
+            await self.handle_tasks(*args,episode)
 
-    async def run(self, root_url):
+    async def handle_tasks(self, del_ts, episode:EpisodeItem):
+        if del_ts:
+            self.video_io.clean_up(episode.name)
+            
+    async def run(self, root_url, *args):
         await self._init_episodes_queue(root_url)
         self.state = EngineState.running
         try:
-            await self._start_crawl()
+            await self._start_crawl(*args)
+            
         finally:
             await self.spider.close()
             self.state = EngineState.done
+
+    
