@@ -12,7 +12,7 @@ cfg: Config = Config()
 
 @click.group()
 @click.version_option(
-    version="1.0.0",
+    version="1.0.1",
     prog_name="Zuna",
     message="%(prog)s [v%(version)s] - A simple anime downloader",
 )
