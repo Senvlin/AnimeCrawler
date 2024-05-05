@@ -9,7 +9,7 @@ import aiohttp.client_exceptions
 from tqdm import tqdm
 
 from src.config import Config
-from src.item import EpisodeItem, M3u8, Ts
+from src.item import EpisodeItem, M3u8, Ts, URLWithNumber
 from src.logger import Logger
 
 
@@ -35,7 +35,7 @@ def retry(_logger: Logger, tries=4, delay=1):
                 except aiohttp.client_exceptions.ClientPayloadError:
                     ...
                 except Exception as e:
-                    # BUG 报错为ClientPayloadError时，不会执行下列代码
+                    # 报错为ClientPayloadError时，不会执行下列代码
                     # noqa: E501 有趣的是，即使报ClientPayloadError，.ts文件也会正常下载到本地 (04.05.2024 测试)
                     _logger.error(f"\033[91m 报错了 {e}\033[0m")
                     await asyncio.sleep(_delay)
@@ -112,27 +112,28 @@ class Spider:
                 return result
 
             return wrapper
-
+        
         while not self.ts_url_queue.empty():
-            url = await self.ts_url_queue.get()
-            self.logger.debug(f"Worker is processing URL: {url}")
-            await pbar_decorator(self.ts_crawl)(url)
+            # 实名吐槽这变量名和类名
+            num_url:URLWithNumber = await self.ts_url_queue.get()
+            self.logger.debug(f"Worker is processing URL: {num_url.url}")
+            await pbar_decorator(self.ts_crawl)(num_url)
             self.logger.debug(
-                f"\033[92m Worker finished processing URL: {url}\033[0m"
+                f"\033[92m Worker finished processing URL: {num_url.url}\033[0m"
             )
             self.ts_url_queue.task_done()
 
     @retry(Logger("crawler"))
-    async def ts_crawl(self, url: str):
+    async def ts_crawl(self, num_url: URLWithNumber):
         """具体的爬取任务
 
         Args:
             url (str): 要爬取的url
         """
         async with self.request_session.get(
-            url, headers=self.headers, timeout=60
+            num_url.url, headers=self.headers, timeout=60
         ) as resp:
-            ts_file = Ts(resp, self._episode.name)
+            ts_file = Ts(num_url.number, resp, self._episode.name)
             await ts_file.save()
 
     async def _m3u8_fetch(self, url) -> M3u8:
