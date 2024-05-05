@@ -1,7 +1,7 @@
 import asyncio
 import pathlib
 from dataclasses import dataclass
-from typing import AsyncGenerator, Optional
+from typing import AsyncGenerator, NamedTuple, Optional
 from urllib.parse import urljoin
 
 import aiofiles
@@ -9,7 +9,10 @@ import aiohttp
 
 from src.videoIO import VideoIO
 
-
+class URLWithNumber(NamedTuple):
+    number: int
+    url: str
+    
 class MediaItem:
     """对媒体文件的包装"""
 
@@ -17,10 +20,10 @@ class MediaItem:
 
     def __init__(
         self,
-        response: aiohttp.ClientResponse,
+        response: Optional[aiohttp.ClientResponse],
         _child_path,
     ):
-        if not isinstance(response, aiohttp.ClientResponse):
+        if response and not isinstance(response, aiohttp.ClientResponse):
             raise ValueError(
                 f"response必须为aiohttp.ClientResponse类型,而不是f{type(response)}"
             )
@@ -60,9 +63,9 @@ class M3u8(MediaItem):
             ts_url_parts = [
                 i.split("\n")[0] for i in text_line if not i.startswith("#")
             ]
-            for ts_url_part in ts_url_parts:
+            for i, ts_url_part in enumerate(ts_url_parts):
                 url = urljoin(self.url, ts_url_part)
-                yield url
+                yield URLWithNumber(i, url)
 
     def __repr__(self) -> str:
         return f"<M3u8File path={self.file_path}>"
@@ -71,9 +74,10 @@ class M3u8(MediaItem):
 class Ts(MediaItem):
     """对ts文件的包装"""
 
-    def __init__(self, response: aiohttp.ClientResponse, _child_path=None):
+    def __init__(self, file_name: str | int, response: aiohttp.ClientResponse, _child_path=None):
         super().__init__(response, _child_path)
-        self.file_name = response.url.parts[-1]
+        # 这里的number是ts文件在m3u8中的顺序，请见Issue #12
+        self.file_name = f"{file_name}.ts"
         self.file_path = self.parent_path / self.file_name
 
     async def save(self):
