@@ -35,6 +35,13 @@ class VideoIO:
             cls._instance = object.__new__(cls, *args, **kw)
         return cls._instance
 
+    def _get_ts_file_paths(self, episode_name: str):
+        self.cwd = self.anime_folder_path / episode_name
+        ts_file_paths = (
+            path for path in self.cwd.iterdir() if path.suffix == ".ts"
+        )
+        return ts_file_paths
+
     def _create_folder(self, _folder_name_or_path: pathlib.Path | str = None):
         """
         Args:
@@ -73,20 +80,28 @@ class VideoIO:
 
     async def merge_ts_files(self, episode_name):
         """合并ts文件为mp4文件"""
-        cwd = self.anime_folder_path / episode_name
-        ts_file_paths = (path for path in cwd.iterdir() if path.suffix == ".ts")
+        paths = self._get_ts_file_paths(episode_name)
         async with aiofiles.open(
-            cwd / f"{episode_name}.mp4", "wb"
+            self.cwd / f"{episode_name}.mp4", "wb"
         ) as parent_fp:
-            for path in ts_file_paths:
+            for path in paths:
                 async with aiofiles.open(path, "rb") as fp:
                     text = await fp.read()
                     await parent_fp.write(text)
         self.logger.info(
-            f"Merge ts files to [{cwd / f'{episode_name}.mp4'}] successfully."
+            f"Merge ts files to [{self.cwd / f'{episode_name}.mp4'}] successfully." #noqa: E501
         )
 
     async def save_file(self, path, content):
-        # BUG 当文件名又臭又长时，会导致文件名过长，无法保存
+        """保存文件"""
         async with aiofiles.open(path, "wb") as fp:
             await fp.write(content)
+
+    def clean_up(self, episode_name):
+        """清理临时文件"""
+        paths = self._get_ts_file_paths(episode_name)
+        for path in paths:
+            path.unlink()
+        self.logger.info(
+            f"Clean up temporary files in [{self.cwd}] successfully."
+        )
