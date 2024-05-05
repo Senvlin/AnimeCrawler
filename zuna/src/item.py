@@ -9,10 +9,12 @@ import aiohttp
 
 from src.videoIO import VideoIO
 
+
 class URLWithNumber(NamedTuple):
     number: int
     url: str
-    
+
+
 class MediaItem:
     """对媒体文件的包装"""
 
@@ -74,9 +76,13 @@ class M3u8(MediaItem):
 class Ts(MediaItem):
     """对ts文件的包装"""
 
-    def __init__(self, file_name: str | int, response: aiohttp.ClientResponse, _child_path=None):
+    def __init__(
+        self,
+        file_name: str | int,
+        response: aiohttp.ClientResponse,
+        _child_path=None,
+    ):
         super().__init__(response, _child_path)
-        # 这里的number是ts文件在m3u8中的顺序，请见Issue #12
         self.file_name = f"{file_name}.ts"
         self.file_path = self.parent_path / self.file_name
 

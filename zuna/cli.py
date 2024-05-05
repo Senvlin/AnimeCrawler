@@ -34,7 +34,7 @@ def search(anime_name):
     anime: AnimeItem = query.select_anime(index)
     query.generate_download_command(anime)
     click.echo(
-        f"Download command for {anime.name} has been created and copied to clipboard successfully" # noqa: E501
+        f"Download command for {anime.name} has been created and copied to clipboard successfully"  # noqa: E501
     )
 
 
@@ -54,7 +54,6 @@ def search(anime_name):
 def download(root_url, anime_name, del_ts):
     engine = Engine()
     cfg.config["common"]["anime_name"] = anime_name
-    print(del_ts)
     asyncio.run(engine.run(root_url, del_ts))
 
 

@@ -1,6 +1,7 @@
 import asyncio
 import re
 from functools import wraps
+import ssl
 from typing import Optional
 from urllib.parse import urljoin
 
@@ -11,7 +12,6 @@ from tqdm import tqdm
 from src.config import Config
 from src.item import EpisodeItem, M3u8, Ts, URLWithNumber
 from src.logger import Logger
-
 
 
 def retry(_logger: Logger, tries=4, delay=1):
@@ -112,10 +112,10 @@ class Spider:
                 return result
 
             return wrapper
-        
+
         while not self.ts_url_queue.empty():
             # 实名吐槽这变量名和类名
-            num_url:URLWithNumber = await self.ts_url_queue.get()
+            num_url: URLWithNumber = await self.ts_url_queue.get()
             self.logger.debug(f"Worker is processing URL: {num_url.url}")
             await pbar_decorator(self.ts_crawl)(num_url)
             self.logger.debug(
@@ -145,9 +145,16 @@ class Spider:
         Returns:
             M3u8
         """
-        r = await self.fetch_html(url)
+        try:
+            r = await self.fetch_html(url)
+        except ssl.SSLCertVerificationError:
+            self.logger.error(
+                f"\033[91m{url} 下载失败，原因：SSL证书验证失败\033[0m"
+            )
+            exit()
         m3u8_url_part = re.findall(r".*?.m3u8", r)[-1]
         m3u8_url = urljoin(url, m3u8_url_part)
+        self.logger.debug(f"Getting m3u8 file from {m3u8_url}")
         async with self.request_session.get(
             m3u8_url, headers=self.headers
         ) as m3u8_resp:
