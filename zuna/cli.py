@@ -5,7 +5,7 @@ import click
 from src.config import Config
 from src.engine import Engine
 from src.item import AnimeItem
-from src.query import Query
+from src.query import Query, Manager
 
 cfg: Config = Config()
 
@@ -36,6 +36,14 @@ def search(anime_name):
     click.echo(
         f"Download command for {anime.name} has been created and copied to clipboard successfully"  # noqa: E501
     )
+
+
+@cli.command(help="Manage the downloaded anime")
+def manage():
+    manager: Manager = Manager()
+    manager.init_anime_list()
+    for fmt_result in manager.format_result():
+        click.echo(fmt_result)
 
 
 @cli.command(help="Download anime from the given url")

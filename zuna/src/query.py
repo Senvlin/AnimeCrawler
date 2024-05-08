@@ -5,6 +5,7 @@ from dataclasses import asdict
 from src.item import AnimeItem
 from src.parser import AnimeParser
 from src.spider import Spider
+from src.videoIO import VideoIO
 
 
 def _align(_string, _length, _type="L") -> str:
@@ -109,6 +110,26 @@ class Query:
         command = f"py cli.py download -n {fmt_name} -u {whole_url}"
         _copy(command)
         return command
+
+
+class Manager:
+    def __init__(self, query=Query()):
+        self.video_io = VideoIO()
+        self.query = query
+
+    def init_anime_list(self):
+        for i in self.video_io._get_anime_folder_paths():
+            self.query.anime_list.append(
+                AnimeItem(
+                    name=i.name,
+                    episode_state="Downloaded",
+                    player_url=None,
+                    detail_url=None,
+                )
+            )
+
+    def format_result(self):
+        return self.query.format_result()
 
 
 if __name__ == "__main__":

@@ -42,6 +42,9 @@ class VideoIO:
         )
         return ts_file_paths
 
+    def _get_anime_folder_paths(self):
+        return (i for i in _video_folder_path.iterdir() if i.is_dir())
+
     def _create_folder(self, _folder_name_or_path: pathlib.Path | str = None):
         """
         Args:
@@ -89,7 +92,7 @@ class VideoIO:
                     text = await fp.read()
                     await parent_fp.write(text)
         self.logger.info(
-            f"Merge ts files to [{self.cwd / f'{episode_name}.mp4'}] successfully." #noqa: E501
+            f"Merge ts files to [{self.cwd / f'{episode_name}.mp4'}] successfully."  # noqa: E501
         )
 
     async def save_file(self, path, content):
