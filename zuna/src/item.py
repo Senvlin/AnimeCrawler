@@ -111,5 +111,5 @@ class EpisodeItem:
 class AnimeItem:
     name: str
     episode_state: str
-    player_url: str
-    detail_url: str
+    player_url: Optional[str] = None
+    detail_url: Optional[str] = None
