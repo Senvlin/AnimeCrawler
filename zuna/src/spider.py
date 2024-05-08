@@ -14,13 +14,13 @@ from src.item import EpisodeItem, M3u8, Ts, URLWithNumber
 from src.logger import Logger
 
 
-def retry(_logger: Logger, tries=4, delay=1):
+def retry(_logger: Logger, tries=3, delay=1):
     """
     一个用于异步函数的重试装饰器
 
     Args:
         _logger (logger): 日志记录器
-        tries (int, optional): 最大重试次数. 默认为4次.
+        tries (int, optional): 最大重试次数. 默认为3次.
         delay (int, optional): 延迟. 默认为1秒.
     """
 
@@ -37,7 +37,9 @@ def retry(_logger: Logger, tries=4, delay=1):
                 except Exception as e:
                     # 报错为ClientPayloadError时，不会执行下列代码
                     # noqa: E501 有趣的是，即使报ClientPayloadError，.ts文件也会正常下载到本地 (04.05.2024 测试)
-                    _logger.error(f"\033[91m 报错了 {e}\033[0m")
+                    _logger.warning(
+                        f"\033[91m 报错了 {e}\033[0m, 正在重试第{abs(_tries-tries)+1}次"
+                    )
                     await asyncio.sleep(_delay)
                     _tries -= 1
 
