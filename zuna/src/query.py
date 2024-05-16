@@ -113,16 +113,25 @@ class Query:
 
 
 class Manager:
-    def __init__(self, query=Query()):
+    def __init__(self, query=Query):
         self.video_io = VideoIO()
-        self.query = query
+        self.query = query()
+
+    def check_state(self, anime_folder_path):
+        episode_count = len(
+            tuple(self.video_io._get_episode_paths(anime_folder_path))
+        )
+        if not episode_count:
+            return "未下载或已删除"
+        return f"已下载{episode_count}集"
 
     def init_anime_list(self):
         for i in self.video_io._get_anime_folder_paths():
+            state = self.check_state(i)
             self.query.anime_list.append(
                 AnimeItem(
                     name=i.name,
-                    episode_state="Downloaded",
+                    episode_state=state,
                     player_url=None,
                     detail_url=None,
                 )
