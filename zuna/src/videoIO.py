@@ -45,6 +45,10 @@ class VideoIO:
     def _get_anime_folder_paths(self):
         return (i for i in _video_folder_path.iterdir() if i.is_dir())
 
+    def _get_episode_paths(self, anime_name: str):
+        self.anime_folder_path = _video_folder_path / anime_name
+        return (i for i in self.anime_folder_path.iterdir() if i.is_dir())
+
     def _create_folder(self, _folder_name_or_path: pathlib.Path | str = None):
         """
         Args:
